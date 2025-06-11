@@ -1,10 +1,13 @@
-import User from "../models/User";
-import OTP from "../models/OTP";
 
-const sendOtp = async (req, res) => {
+import User from '../models/User.js';
+import OTP from '../models/OTP.js';
+import otpGenerator from 'otp-generator';
+
+export const sendOtp = async (req, res) => {
    try {
-      const { email } = req.body
-
+      console.log(req.body)
+      const { email } = req.body;
+      console.log(email)
       let otp = otpGenerator.generate(6, {
          upperCaseAlphabets: false,
          specialChars: false,
@@ -21,37 +24,40 @@ const sendOtp = async (req, res) => {
          });
       }
 
-      await OTP.create({ otp, email, expiresAt: Date.now() + 5 * 60 * 1000, })
-      return res.status(200).json({ msg: "OTP sent successfully", otp })
-
+      await OTP.create({ otp, email, expiresAt: Date.now() + 5 * 60 * 1000 });
+      return res.status(200).json({ msg: 'OTP sent successfully', otp });
    } catch (error) {
-      res.status(500).json({ msg: "Error sending OTP", error: error.message });
+      res.status(500).json({ msg: 'Error sending OTP', error: error.message });
    }
-}
+};
 
-const registerUser = async (req, res) => {
+export const registerUser = async (req, res) => {
    try {
-      const { name, username, email, otp, password } = req.body
-
-      const existingUser = await User.findOne({ email })
-      if (existingUser) { return res.status(400).json({ msg: 'User already registered' }) }
+      const { name, username, email, otp, password } = req.body;
+      let { role = '' } = req.body
+      if (role === '')
+         role = 'student';
+      const existingUser = await User.findOne({ email });
+      if (existingUser) return res.status(400).json({ msg: 'User already registered' });
 
       const latestOtp = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1);
 
-      if (latestOtp.length === 0 || otp !== latestOtp) {
-         return res.status(400).json({ msg: "Invalid or expired otp" })
+      if (
+         latestOtp.length === 0 ||
+         latestOtp[0].otp !== otp ||
+         latestOtp[0].expiresAt < Date.now()
+      ) {
+         return res.status(400).json({ msg: 'Invalid or expired OTP' });
       }
 
-      const newUser = await User.create({ name, username, email, password });
+      const newUser = await User.create({ name, username, email, password, role });
+      const { password: pw, ...userWithoutPassword } = newUser.toObject();
 
-      const user = newUser.select("password")
-
-      return res.status(200).json({ msg: "User registered", user })
-
+      return res.status(200).json({ msg: 'User registered', user: userWithoutPassword });
    } catch (error) {
-      res.status(500).json({ msg: "Error while registering user", error: error.message });
+      res.status(500).json({ msg: 'Error while registering user', error: error.message });
    }
-}
+};
 
 export const loginUser = async (req, res) => {
    try {
@@ -74,7 +80,3 @@ export const logoutUser = async (req, res) => {
       res.status(500).json({ msg: 'Logout error', error: error.message });
    }
 };
-
-
-export { sendOtp, registerUser }
-
