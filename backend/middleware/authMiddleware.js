@@ -13,3 +13,19 @@ export const authenticateLogin = (req, res, next) => {
       });
    })(req, res, next);
 };
+
+
+export const ensureAuthenticated = (req, res, next) => {
+   if (req.isAuthenticated()) return next();
+   return res.status(401).json({ msg: 'You must be logged in to access this resource' })
+}
+
+export const authorizeRoles = (...roles) => {
+   return (req, res, next) => {
+      if (!req.user || !roles.includes(req.user.role)) {
+         return res.status(403).json({ msg: 'Acess denied: insufficient role' })
+      }
+      mext();
+   }
+}
+
