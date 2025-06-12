@@ -6,7 +6,7 @@ const TestSchema = new mongoose.Schema({
    department: { type: String }, // optional, for dept-based sharing
    sharedLinkId: { type: String }, // optional link for public access
    questions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
-   students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+   students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
    createdAt: { type: Date, default: Date.now },
    start_time: { type: Date, required: true },
    end_time: { type: String, required: true }
