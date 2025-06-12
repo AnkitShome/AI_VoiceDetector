@@ -8,7 +8,7 @@ import connectDB from './config/mongo.js';
 
 import authRoutes from './routes/user.js';
 import studentRoutes from './routes/student.js';
-import professorRoutes from './routes/professor.js';
+import examinerRoutes from './routes/examiner.js';
 
 dotenv.config();
 connectDB(); // ✅ Connect to MongoDB
@@ -38,7 +38,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);
-app.use('/api/professor', professorRoutes);
+app.use('/api/professor', examinerRoutes);
 
 // Start server
 app.listen(5000, () => console.log('Server running on port 5000'));

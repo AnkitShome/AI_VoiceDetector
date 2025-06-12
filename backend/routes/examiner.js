@@ -4,6 +4,6 @@ import { ensureAuthenticated, authorizeRoles } from '../middleware/authMiddlewar
 
 const router = express.Router();
 
-router.post('/create-test', ensureAuthenticated, authorizeRoles('professor'), createTest)
+router.post('/create-test', ensureAuthenticated, authorizeRoles('examiner'), createTest)
 
 export default router;
