@@ -1,6 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 function Navbar() {
+  const location = useLocation();
+
+  const hideNavbarRoutes = ["/prof-dash", "/stud-dash"];
+  const shouldHideNavbar = hideNavbarRoutes.some((route) =>
+    location.pathname.startsWith(route)
+  );
+
+  if (shouldHideNavbar) return null;
   return (
     <nav
       class="navbar navbar-expand-lg border-bottom"

@@ -1,48 +1,62 @@
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Hero() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Extract the username from the last part of the URL
+  const username = location.pathname.split("/").filter(Boolean).pop();
+  console.log("username:", username);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/"); // Redirect to home/login if token is missing
+      navigate("/"); // Redirect if not logged in
     }
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/"); // Redirect to homepage after logout
+    navigate("/");
   };
 
   return (
-    <div className="container mt-3">
-      <div className="d-flex justify-content-end">
-        <button className="btn btn-danger" onClick={handleLogout}>
+    <div>
+      {/* Custom Navbar */}
+      <div
+        className="d-flex justify-content-between align-items-center px-4 py-3"
+        style={{
+          backgroundColor: "#cce5ff",
+          fontSize: "1.5rem",
+          fontWeight: "500",
+          borderBottom: "2px solid #b8daff",
+        }}
+      >
+        <div className="d-flex align-items-center gap-2">
+          <i
+            className="fa fa-graduation-cap"
+            aria-hidden="true"
+            style={{ fontSize: "2rem", color: "#004085" }}
+          ></i>
+          <span className="text-dark">Welcome  <strong>{username}</strong></span>
+        </div>
+
+        <button className="btn btn-danger btn-sm px-3 fw-semibold" onClick={handleLogout}>
           Logout
         </button>
       </div>
 
-      <div className="row justify-content-center text-center mt-4">
-        <img
-          src="/proj_img/gpt4.png"
-          alt="Hero image"
-          className="mb-2"
-          style={{
-            width: "750px",
-            height: "auto",
-            // transition: "transform 0.3s ease, box-shadow 0.3s ease",
-          }}
-        //   onMouseOver={(e) => {
-        //     e.currentTarget.style.transform = "scale(1.03)";
-        //     e.currentTarget.style.boxShadow = "0 8px 16px rgba(0, 0, 0, 0.3)";
-        //   }}
-        //   onMouseOut={(e) => {
-        //     e.currentTarget.style.transform = "scale(1)";
-        //     e.currentTarget.style.boxShadow = "none";
-        //   }}
-        />
+      {/* Main Content */}
+      <div className="container mt-4">
+        <div className="row justify-content-center text-center">
+          <img
+            src="/proj_img/gpt4.png"
+            alt="Hero"
+            className="mb-2"
+            style={{ width: "750px", height: "auto" }}
+          />
+        </div>
       </div>
     </div>
   );

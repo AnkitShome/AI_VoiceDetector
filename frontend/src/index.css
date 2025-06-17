@@ -17,3 +17,12 @@ code {
 .nav-item{
   margin-left:500px;
 }
+.hover-scale-wrapper {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform-origin: center;
+}
+
+.hover-scale-wrapper:hover {
+  transform: scale(1.015);
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+}

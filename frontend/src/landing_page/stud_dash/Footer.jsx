@@ -8,7 +8,7 @@ const Footer = () => {
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem("token");
-    console.log(token);
+  console.log(token);
   useEffect(() => {
     const fetchTests = async () => {
       try {
@@ -20,7 +20,7 @@ const Footer = () => {
             },
           }
         );
-        console.log("tests:",res.data.tests);
+        console.log("tests:", res.data.tests);
         setTests(res.data.tests);
       } catch (err) {
         console.error("Error fetching tests:", err);
@@ -35,12 +35,15 @@ const Footer = () => {
   if (loading) return <div className="text-center mt-5">Loading tests...</div>;
   if (tests.length === 0)
     return (
-      <div className="text-center mt-5 fw-bold mb-4">
-        
-        {/* <h2 className="text-center fw-bold mb-4" style={{ fontSize: "2rem" }}>
-          Scheduled Tests
-        </h2> */}
-        No upcoming tests found.
+      <div className="text-center  fw-bold mb-5">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/4076/4076503.png"
+          alt="Test Illustration"
+          style={{ maxWidth: "150px", marginBottom: "20px" }}
+        />
+        <div className="mt-3" style={{ fontSize: "1.5rem", fontWeight: "500" }}>
+          No upcoming tests found.
+        </div>
       </div>
     );
 
