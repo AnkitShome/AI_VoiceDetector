@@ -14,7 +14,7 @@ function HomePage() {
       <Upload />
       <Usage />
       <Cases />
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

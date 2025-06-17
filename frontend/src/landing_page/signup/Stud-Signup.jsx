@@ -1,161 +1,173 @@
-import React, { useState } from 'react';
-import { Form, Button, Row, Col } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "./Prof-Signup.css";
 
-const Stud_SignUp = () => {
+const Prof_Signup = ({ onClose }) => {
   const navigate = useNavigate();
-
   const [inputValue, setInputValue] = useState({
-    email: '',
-    password: '',
-    username: '',
+    name: "",
+    email: "",
+    password: "",
+    username: "",
+    // otp: "",
+    department: ""
   });
-
-  const { email, password, username } = inputValue;
+// removed otp
+  const { name, email, password, username,  department } = inputValue;
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
-    setInputValue({
-      ...inputValue,
+    setInputValue((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleError = (err) =>
     toast.error(err, {
-      position: 'bottom-left',
+      position: "bottom-left",
     });
 
   const handleSuccess = (msg) =>
     toast.success(msg, {
-      position: 'bottom-right',
+      position: "bottom-right",
     });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        name,
+        username,
+        email,
+        password,
+        // otp,
+        role: "student",
+        examinerData: {
+          department
+        }
+      };
+
       const { data } = await axios.post(
-        'http://localhost:3002/signup',
-        {
-          ...inputValue,
-        },
+        "http://localhost:5000/api/auth/register", // Make sure your backend route matches this
+        payload,
         { withCredentials: true }
       );
-      const { success, message } = data;
-      if (success) {
-        handleSuccess(message);
-        setTimeout(() => {
-          navigate('/');
-        }, 1000);
-      } else {
-        handleError(message);
-      }
+
+      const { msg } = data;
+      handleSuccess(msg);
+      setTimeout(() => {
+        const studName = username.replace(/\s+/g, '-').toLowerCase();
+        navigate(`/stud-dash/${studName}`);
+      }, 1000);
     } catch (error) {
-      console.log(error);
-      handleError("Signup failed. Please try again.");
+      console.error("SIGNUP ERROR:", error); // 👈 Add this
+      if (error.response && error.response.data && error.response.data.msg) {
+        handleError(error.response.data.msg);
+      } else {
+        handleError("Something went wrong!");
+      }
     }
 
     setInputValue({
-      email: '',
-      password: '',
-      username: '',
+      name: "",
+      email: "",
+      password: "",
+      username: "",
+      // otp: "",
+      department: ""
     });
   };
 
   return (
-    <div className="container mt-5">
-      <Row>
-        {/* Register Section */}
-        <Col md={6}>
-          <h2 className="fw-bold text-center mb-4" style={{ color: '#001f3f' }}>Register</h2>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="formRegisterName">
-              <Form.Label>Name:</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter your name"
-                name="username"
-                value={username}
-                onChange={handleOnChange}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="formRegisterEmail">
-              <Form.Label>Email:</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter your email"
-                name="email"
-                value={email}
-                onChange={handleOnChange}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="formRegisterPassword">
-              <Form.Label>Password:</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Enter your password"
-                name="password"
-                value={password}
-                onChange={handleOnChange}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="formBasicCheckbox">
-              <Form.Check
-                type="checkbox"
-                label={<>I agree to the AI Voice Detector <a href="#" style={{ color: '#3b82f6' }}>user agreement</a></>}
-              />
-            </Form.Group>
-
-            <div className="d-flex justify-content-center">
-              <Button
-                variant="primary"
-                type="submit"
-                style={{ backgroundColor: '#3b82f6', border: 'none', padding: '8px 20px' }}
-              >
-                Create an Account
-              </Button>
-            </div>
-          </Form>
-        </Col>
-
-        {/* Login Section */}
-        <Col md={6}>
-          <h2 className="fw-bold text-center mb-0" style={{ color: '#001f3f' }}>Log in</h2>
-          <p className="text-center mb-4" style={{ fontWeight: '500' }}>If You Already Have an Account</p>
-          <Form>
-            <Form.Group className="mb-3" controlId="formLoginEmail">
-              <Form.Label>Email:</Form.Label>
-              <Form.Control type="email" placeholder="Enter your email" />
-            </Form.Group>
-
-            <Form.Group className="mb-2" controlId="formLoginPassword">
-              <Form.Label>Password:</Form.Label>
-              <Form.Control type="password" placeholder="Enter your password" />
-            </Form.Group>
-
-            <div className="mb-3 text-end">
-              <a href="#" style={{ color: '#3b82f6', fontSize: '14px' }}>Forgot password?</a>
-            </div>
-
-            <div className="d-flex justify-content-center">
-              <Button
-                variant="primary"
-                type="submit"
-                style={{ backgroundColor: '#3b82f6', border: 'none', padding: '8px 32px' }}
-              >
-                Log in
-              </Button>
-            </div>
-          </Form>
-        </Col>
-      </Row>
+    <div className="signup-wrapper">
+      <h2 className="signup-title">Student Register</h2>
+      <form className="signup-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Name:</label>
+          <input
+            type="text"
+            name="name"
+            value={name}
+            onChange={handleOnChange}
+            placeholder="Enter your name"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Username:</label>
+          <input
+            type="text"
+            name="username"
+            value={username}
+            onChange={handleOnChange}
+            placeholder="Choose a username"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Email:</label>
+          <input
+            type="email"
+            name="email"
+            value={email}
+            onChange={handleOnChange}
+            placeholder="Enter your email"
+            required
+          />
+        </div>
+        {/* <div className="form-group">
+          <label>OTP:</label>
+          <input
+            type="text"
+            name="otp"
+            value={otp}
+            onChange={handleOnChange}
+            placeholder="Enter the OTP sent to your email"
+            required
+          />
+        </div> */}
+        <div className="form-group">
+          <label>Password:</label>
+          <input
+            type="password"
+            name="password"
+            value={password}
+            onChange={handleOnChange}
+            placeholder="Enter your password"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Department:</label>
+          <input
+            type="text"
+            name="department"
+            value={department}
+            onChange={handleOnChange}
+            placeholder="Enter your department"
+            required
+          />
+        </div>
+        <div className="form-check">
+          <input type="checkbox" id="agree" required />
+          <label htmlFor="agree">
+            I agree to the AI Voice Detector <a href="/terms">user agreement</a>
+          </label>
+        </div>
+        <button type="submit" className="submit-btn">
+          Create an Account
+        </button>
+        <div className="login-redirect">
+          Already have an account? <a href="/stud-login">Login</a>
+        </div>
+      </form>
+      <ToastContainer />
     </div>
   );
 };
 
-export default Stud_SignUp;
+export default Prof_Signup;

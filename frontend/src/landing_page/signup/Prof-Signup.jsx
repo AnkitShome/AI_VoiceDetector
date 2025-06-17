@@ -8,19 +8,22 @@ import "./Prof-Signup.css";
 const Prof_Signup = ({ onClose }) => {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState({
+    name: "",
     email: "",
     password: "",
     username: "",
+    // otp: "",
+    department: ""
   });
-
-  const { email, password, username } = inputValue;
+// removed otp
+  const { name, email, password, username,  department } = inputValue;
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
-    setInputValue({
-      ...inputValue,
+    setInputValue((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleError = (err) =>
@@ -36,42 +39,72 @@ const Prof_Signup = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        name,
+        username,
+        email,
+        password,
+        // otp,
+        role: "examiner",
+        examinerData: {
+          department
+        }
+      };
+
       const { data } = await axios.post(
-        "http://localhost:3002/signup",
-        { ...inputValue },
+        "http://localhost:5000/api/auth/register", // Make sure your backend route matches this
+        payload,
         { withCredentials: true }
       );
-      const { success, message } = data;
-      if (success) {
-        handleSuccess(message);
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
-      } else {
-        handleError(message);
-      }
+
+      const { msg } = data;
+      handleSuccess(msg);
+      setTimeout(() => {
+        const profName = username.replace(/\s+/g, '-').toLowerCase();
+        navigate(`/prof-dash/${profName}`);
+      }, 1000);
     } catch (error) {
-      console.log(error);
+      console.error("SIGNUP ERROR:", error); // 👈 Add this
+      if (error.response && error.response.data && error.response.data.msg) {
+        handleError(error.response.data.msg);
+      } else {
+        handleError("Something went wrong!");
+      }
     }
+
     setInputValue({
+      name: "",
       email: "",
       password: "",
       username: "",
+      // otp: "",
+      department: ""
     });
   };
 
   return (
     <div className="signup-wrapper">
-      <h2 className="signup-title">Register</h2>
+      <h2 className="signup-title">Professor Register</h2>
       <form className="signup-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Name:</label>
           <input
             type="text"
+            name="name"
+            value={name}
+            onChange={handleOnChange}
+            placeholder="Enter your name"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Username:</label>
+          <input
+            type="text"
             name="username"
             value={username}
             onChange={handleOnChange}
-            placeholder="Enter your name"
+            placeholder="Choose a username"
             required
           />
         </div>
@@ -86,6 +119,17 @@ const Prof_Signup = ({ onClose }) => {
             required
           />
         </div>
+        {/* <div className="form-group">
+          <label>OTP:</label>
+          <input
+            type="text"
+            name="otp"
+            value={otp}
+            onChange={handleOnChange}
+            placeholder="Enter the OTP sent to your email"
+            required
+          />
+        </div> */}
         <div className="form-group">
           <label>Password:</label>
           <input
@@ -94,6 +138,17 @@ const Prof_Signup = ({ onClose }) => {
             value={password}
             onChange={handleOnChange}
             placeholder="Enter your password"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Department:</label>
+          <input
+            type="text"
+            name="department"
+            value={department}
+            onChange={handleOnChange}
+            placeholder="Enter your department"
             required
           />
         </div>
