@@ -31,11 +31,7 @@ function Hero() {
         }}
       >
         <div className="d-flex align-items-center gap-2">
-          <i
-            className="fa fa-graduation-cap"
-            aria-hidden="true"
-            style={{ fontSize: "2rem", color: "#004085" }}
-          ></i>
+          <i class="fa fa-black-tie" aria-hidden="true" style={{fontSize :"2rem"}}></i>
           <span className="text-dark">
             Welcome <strong>{username}</strong>
           </span>

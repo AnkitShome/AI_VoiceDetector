@@ -37,11 +37,11 @@ function Hero() {
           human speech from synthetically generated audio — swiftly and
           effortlessly.
         </p>
-        <Link to="/signup">
+        <Link to="/">
           <button
           className="p-2 btn btn-primary fs-5"
           style={{ width: "20%", margin: "0 auto" }}
-           to="/Signup"
+           to="/"
         >
           Signup Now
         </button>

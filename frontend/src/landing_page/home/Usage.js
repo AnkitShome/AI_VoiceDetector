@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./Usage.css"; // Make sure this has the zoom-on-hover CSS
 
 function Usage() {
   const [activeTab, setActiveTab] = useState("individuals");
@@ -7,36 +8,46 @@ function Usage() {
     padding: "10px 20px",
     cursor: "pointer",
     fontWeight: "500",
-    color: activeTab === tab ? "#000" : "#3b5bdb", // dark for active, blue for inactive
+    color: activeTab === tab ? "#000" : "#3b5bdb",
     borderBottom: activeTab === tab ? "2px solid #3b5bdb" : "none",
     backgroundColor: "transparent",
     border: "none",
     outline: "none",
+    transition: "transform 0.3s ease",
   });
 
   return (
     <div className="container">
       <div className="row">
-        <div className="col-6 ">
+
+        {/* ✅ Left Image with hover effect */}
+        <div className="col-6 d-flex justify-content-center align-items-center">
           <img
             src="proj_img/fakeVoice.png"
-            className="img-fluid mb-5"
-            alt="Usage image"
+            className="img-fluid mb-5 zoom-on-hover"
+            alt="Usage"
+            style={{ maxWidth: "100%", borderRadius: "10px" }}
           />
         </div>
+
+        {/* ✅ Right full content with one zoom */}
         <div
-          className="col-6"
+          className="col-6 zoom-on-hover"
           style={{
             maxWidth: "700px",
             margin: "auto",
             fontFamily: "sans-serif",
+            borderRadius: "12px",
+            transition: "transform 0.3s ease",
+            padding: "10px",
           }}
         >
-          <h1 style={{ fontWeight: "800" }}>
+          <h1 className="fw-bold mb-3">
             AI Voices against
             <br />
             individuals and businesses
           </h1>
+
           <p style={{ color: "#555", fontSize: "16px" }}>
             Today, AI voices are so sophisticated that using our ears, we cannot
             differentiate
@@ -45,11 +56,11 @@ function Usage() {
           </p>
 
           <div
+            className="p-3 mt-3"
             style={{
               border: "1px solid #dfe3e6",
               borderRadius: "10px",
-              padding: "20px",
-              marginTop: "20px",
+              backgroundColor: "#fff",
             }}
           >
             {/* Tabs */}
@@ -107,7 +118,7 @@ function Usage() {
                   Using our AI Voice Detector, businesses can help their
                   employees to either use our extension or integrate our API
                   into their work environment to verify the authenticity of all
-                  received audio messages, calls, or meetings
+                  received audio messages, calls, or meetings.
                 </p>
               </div>
             )}

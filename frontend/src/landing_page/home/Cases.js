@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./Cases.css";
 
 const caseData = [
   {
@@ -46,7 +47,7 @@ const Cases = () => {
           {caseData.map((c, i) => (
             <button
               key={i}
-              className={`btn mb-3 mt-3 text-start d-flex align-items-center justify-content-start px-3 py-5 w-100 ${
+              className={`btn mb-3 mt-3 text-start d-flex align-items-center justify-content-start px-3 py-5 w-100 zoom-btn-hover ${
                 selectedCaseIndex === i
                   ? "btn-primary text-white"
                   : "btn-outline-secondary text-black"
@@ -55,10 +56,11 @@ const Cases = () => {
                 borderRadius: "10px",
                 fontWeight: 500,
                 minHeight: "60px",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
               }}
               onClick={() => handleCaseClick(i)}
             >
-              <i class="fa fa-bars me-4" aria-hidden="true"></i>
+              <i className="fa fa-bars me-4" aria-hidden="true"></i>
               <span className="text-wrap text-break">{c.title}</span>
             </button>
           ))}
@@ -68,15 +70,19 @@ const Cases = () => {
             <img
               src={selectedCase.img}
               alt="case"
-              className="img-fluid rounded h-100 w-100 object-fit-cover"
-              style={{ objectFit: "cover" }}
+              className="img-fluid rounded h-100 w-100 object-fit-cover zoom-btn-hover"
+              style={{
+                objectFit: "cover",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                borderRadius: "12px",
+              }}
             />
           </div>
         </div>
         <div className="col-md-4 d-flex align-items-stretch right">
           <div
             style={{ flex: "1 1 60%" }}
-            className="d-flex flex-column justify-content-between"
+            className="d-flex flex-column justify-content-between zoom-btn-hover"
           >
             <div>
               <h4 className="fw-bold mb-3">{selectedCase.heading}</h4>
