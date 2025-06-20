@@ -1,18 +1,42 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Card, Form, Button } from "react-bootstrap";
-import "./Upload.css"; // Custom hover styles
+import { motion, useAnimation } from "framer-motion";
+import "./Upload.css";
 
 function Upload() {
+  const leftControls = useAnimation();
+  const rightControls = useAnimation();
+  const ref = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          leftControls.start({ opacity: 1, x: 0 });
+          rightControls.start({ opacity: 1, x: 0 });
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [leftControls, rightControls]);
+
   return (
-    <div className="container">
+    <div className="container" ref={ref}>
       <div className="row">
 
-        {/* ✅ Left Side with curved, compact container and hover zoom */}
-        <div className="col-6 d-flex justify-content-center align-items-center">
+        {/* ✅ Left Side with horizontal transition + hover zoom */}
+        <motion.div
+          className="col-6 d-flex justify-content-center align-items-center"
+          initial={{ opacity: 0, x: -100 }}
+          animate={leftControls}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
           <div
             className="p-4 zoom-on-hover"
             style={{
-              // backgroundColor: "#f0f8ff",
               borderRadius: "20px",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
               width: "100%",
@@ -43,12 +67,15 @@ function Upload() {
               </h5>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        {/* ✅ Right Side - Upload Card with hover zoom */}
-        <div
+        {/* ✅ Right Side with horizontal transition + hover zoom */}
+        <motion.div
           className="col-6 mt-4 d-flex justify-content-center align-items-center"
           style={{ minHeight: "60vh" }}
+          initial={{ opacity: 0, x: 100 }}
+          animate={rightControls}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <div className="zoom-on-hover" style={{ width: "100%", maxWidth: "600px" }}>
             <Card
@@ -68,7 +95,7 @@ function Upload() {
               </div>
 
               <Form.Group controlId="formFile" className="mb-4">
-                <Form.Control type="file" />
+                <Form.Control type="file" disabled />
               </Form.Group>
 
               <div className="text-center">
@@ -82,7 +109,7 @@ function Upload() {
               </div>
             </Card>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

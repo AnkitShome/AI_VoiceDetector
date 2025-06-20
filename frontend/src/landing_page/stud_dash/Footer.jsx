@@ -1,26 +1,23 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./Footer.css"; // 🆕 Import custom CSS
+import { motion } from "framer-motion"; // ✅ Import motion
+import "./Footer.css";
 
 const Footer = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem("token");
-  console.log(token);
+
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/professor/showTest",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log("tests:", res.data.tests);
+        const res = await axios.get("http://localhost:5000/api/professor/showTest", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setTests(res.data.tests);
       } catch (err) {
         console.error("Error fetching tests:", err);
@@ -33,9 +30,10 @@ const Footer = () => {
   }, []);
 
   if (loading) return <div className="text-center mt-5">Loading tests...</div>;
+
   if (tests.length === 0)
     return (
-      <div className="text-center  fw-bold mb-5">
+      <div className="text-center fw-bold mb-5">
         <img
           src="https://cdn-icons-png.flaticon.com/512/4076/4076503.png"
           alt="Test Illustration"
@@ -54,8 +52,14 @@ const Footer = () => {
       </h2>
 
       <div className="d-flex flex-column gap-4">
-        {tests.map((test) => (
-          <div key={test._id} className="card custom-card">
+        {tests.map((test, index) => (
+          <motion.div
+            key={test._id}
+            className="card custom-card"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+          >
             <div className="card-body d-flex flex-column">
               <h4 className="card-title mb-3">{test.title}</h4>
 
@@ -73,12 +77,10 @@ const Footer = () => {
               </p>
 
               <div className="mt-auto d-flex justify-content-end">
-                <button className="btn btn-primary shadow-sm">
-                  Start Test
-                </button>
+                <button className="btn btn-primary shadow-sm">Start Test</button>
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>

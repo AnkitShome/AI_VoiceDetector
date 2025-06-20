@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
+import { motion } from "framer-motion"; // ✅ Added
 import "react-toastify/dist/ReactToastify.css";
 import "./Prof-Signup.css";
 
@@ -12,11 +13,10 @@ const Prof_Signup = ({ onClose }) => {
     email: "",
     password: "",
     username: "",
-    // otp: "",
     department: ""
   });
-// removed otp
-  const { name, email, password, username,  department } = inputValue;
+
+  const { name, email, password, username, department } = inputValue;
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -44,7 +44,6 @@ const Prof_Signup = ({ onClose }) => {
         username,
         email,
         password,
-        // otp,
         role: "student",
         examinerData: {
           department
@@ -52,20 +51,20 @@ const Prof_Signup = ({ onClose }) => {
       };
 
       const { data } = await axios.post(
-        "http://localhost:5000/api/auth/register", // Make sure your backend route matches this
+        "http://localhost:5000/api/auth/register",
         payload,
         { withCredentials: true }
       );
 
-      const { msg } = data;
-      handleSuccess(msg);
+      handleSuccess(data.msg);
+
       setTimeout(() => {
         const studName = username.replace(/\s+/g, '-').toLowerCase();
         navigate(`/stud-dash/${studName}`);
       }, 1000);
     } catch (error) {
-      console.error("SIGNUP ERROR:", error); // 👈 Add this
-      if (error.response && error.response.data && error.response.data.msg) {
+      console.error("SIGNUP ERROR:", error);
+      if (error.response?.data?.msg) {
         handleError(error.response.data.msg);
       } else {
         handleError("Something went wrong!");
@@ -77,13 +76,17 @@ const Prof_Signup = ({ onClose }) => {
       email: "",
       password: "",
       username: "",
-      // otp: "",
       department: ""
     });
   };
 
   return (
-    <div className="signup-wrapper">
+    <motion.div
+      className="signup-wrapper"
+      initial={{ opacity: 0, x: 100, scale: 0.95 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       <h2 className="signup-title">Student Register</h2>
       <form className="signup-form" onSubmit={handleSubmit}>
         <div className="form-group">
@@ -119,17 +122,6 @@ const Prof_Signup = ({ onClose }) => {
             required
           />
         </div>
-        {/* <div className="form-group">
-          <label>OTP:</label>
-          <input
-            type="text"
-            name="otp"
-            value={otp}
-            onChange={handleOnChange}
-            placeholder="Enter the OTP sent to your email"
-            required
-          />
-        </div> */}
         <div className="form-group">
           <label>Password:</label>
           <input
@@ -166,7 +158,7 @@ const Prof_Signup = ({ onClose }) => {
         </div>
       </form>
       <ToastContainer />
-    </div>
+    </motion.div>
   );
 };
 

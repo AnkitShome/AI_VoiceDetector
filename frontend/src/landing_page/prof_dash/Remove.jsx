@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { motion, useAnimation } from "framer-motion";
 
 const RemoveStudent = () => {
   const [showForm, setShowForm] = useState(false);
@@ -8,6 +9,25 @@ const RemoveStudent = () => {
   const [message, setMessage] = useState("");
 
   const token = localStorage.getItem("token");
+
+  const leftControls = useAnimation();
+  const rightControls = useAnimation();
+  const ref = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          leftControls.start({ opacity: 1, x: 0 });
+          rightControls.start({ opacity: 1, x: 0 });
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [leftControls, rightControls]);
 
   const handleRemove = async () => {
     try {
@@ -28,7 +48,7 @@ const RemoveStudent = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <div className="container mt-5" ref={ref}>
       <div
         className="card shadow p-5"
         style={{
@@ -41,8 +61,13 @@ const RemoveStudent = () => {
         onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
       >
         <div className="d-flex justify-content-between align-items-start flex-wrap">
-          {/* Left Side - Form */}
-          <div style={{ flex: "1 1 55%" }}>
+          {/* Left Side - Form with motion */}
+          <motion.div
+            style={{ flex: "1 1 55%" }}
+            initial={{ opacity: 0, x: -80 }}
+            animate={leftControls}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
             <h3 className="text-primary fw-bold mb-3 d-flex align-items-center">
               <i className="bi bi-person-x-fill me-2 fs-4"></i> Remove Student?
             </h3>
@@ -86,15 +111,18 @@ const RemoveStudent = () => {
                 {message}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          {/* Right Side - Illustration or info */}
-          <div
+          {/* Right Side - Image with motion */}
+          <motion.div
             style={{
               flex: "1 1 35%",
               textAlign: "center",
               paddingTop: "20px",
             }}
+            initial={{ opacity: 0, x: 80 }}
+            animate={rightControls}
+            transition={{ duration: 0.7, ease: "easeOut" }}
           >
             <img
               src="https://cdn-icons-png.flaticon.com/512/6861/6861362.png"
@@ -104,7 +132,7 @@ const RemoveStudent = () => {
             <p className="text-secondary" style={{ fontSize: "0.95rem" }}>
               Removing a student will revoke their test access and delete related records.
             </p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

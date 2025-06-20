@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./Prof-Login.css"; // We'll match styling with your register page
+import { motion } from "framer-motion"; // ✅ Import Framer Motion
+import "./Prof-Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -36,7 +37,6 @@ const Login = () => {
         { withCredentials: true }
       );
 
-      // ✅ Store token in localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("profile", JSON.stringify(data.profile));
@@ -64,14 +64,16 @@ const Login = () => {
       }
     }
 
-    setInputValue({
-      email: "",
-      password: "",
-    });
+    setInputValue({ email: "", password: "" });
   };
 
   return (
-    <div className="signup-wrapper">
+    <motion.div
+      className="signup-wrapper"
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <h2 className="signup-title">Professor Login</h2>
       <form className="signup-form" onSubmit={handleSubmit}>
         <div className="form-group">
@@ -110,7 +112,7 @@ const Login = () => {
         </div>
       </form>
       <ToastContainer />
-    </div>
+    </motion.div>
   );
 };
 

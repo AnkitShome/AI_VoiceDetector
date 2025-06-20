@@ -1,8 +1,26 @@
-import React, { useState } from "react";
-import "./Usage.css"; // Make sure this has the zoom-on-hover CSS
+import React, { useEffect, useRef } from "react";
+import { motion, useAnimation } from "framer-motion";
+import "./Usage.css";
 
 function Usage() {
-  const [activeTab, setActiveTab] = useState("individuals");
+  const controls = useAnimation();
+  const ref = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          controls.start({ opacity: 1, y: 0 });
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [controls]);
+
+  const [activeTab, setActiveTab] = React.useState("individuals");
 
   const tabStyle = (tab) => ({
     padding: "10px 20px",
@@ -17,9 +35,14 @@ function Usage() {
   });
 
   return (
-    <div className="container">
+    <motion.div
+      className="container"
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={controls}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+    >
       <div className="row">
-
         {/* ✅ Left Image with hover effect */}
         <div className="col-6 d-flex justify-content-center align-items-center">
           <img
@@ -125,7 +148,7 @@ function Usage() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

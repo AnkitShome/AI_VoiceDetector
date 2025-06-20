@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { motion, useAnimation } from "framer-motion";
 import "./Cases.css";
 
 const caseData = [
@@ -31,18 +32,39 @@ const caseData = [
 const Cases = () => {
   const [selectedCaseIndex, setSelectedCaseIndex] = useState(0);
 
-  const handleCaseClick = (index) => {
-    setSelectedCaseIndex(index);
-  };
+  // Animation controls
+  const controls = useAnimation();
+  const ref = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          controls.start({ opacity: 1, y: 0 });
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [controls]);
 
   const selectedCase = caseData[selectedCaseIndex];
 
   return (
-    <div className="container py-5">
+    <motion.div
+      className="container py-5"
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={controls}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+    >
       <div className="text-center mb-5">
         <h1 className="fw-bold display-5">Real Cases of AI Voice Fraud</h1>
       </div>
       <div className="row align-items-stretch">
+        {/* ✅ Case Buttons */}
         <div className="col-md-4 mb-4 d-flex flex-column justify-content-between">
           {caseData.map((c, i) => (
             <button
@@ -58,13 +80,15 @@ const Cases = () => {
                 minHeight: "60px",
                 transition: "transform 0.3s ease, box-shadow 0.3s ease",
               }}
-              onClick={() => handleCaseClick(i)}
+              onClick={() => setSelectedCaseIndex(i)}
             >
               <i className="fa fa-bars me-4" aria-hidden="true"></i>
               <span className="text-wrap text-break">{c.title}</span>
             </button>
           ))}
         </div>
+
+        {/* ✅ Case Image */}
         <div className="col-md-4 d-flex align-items-stretch">
           <div className="me-md-4 mb-3 mb-md-0" style={{ flex: "1 1 40%" }}>
             <img
@@ -79,6 +103,8 @@ const Cases = () => {
             />
           </div>
         </div>
+
+        {/* ✅ Case Content */}
         <div className="col-md-4 d-flex align-items-stretch right">
           <div
             style={{ flex: "1 1 60%" }}
@@ -96,7 +122,7 @@ const Cases = () => {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

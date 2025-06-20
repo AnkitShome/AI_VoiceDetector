@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./Stud-Login.css"; // We'll match styling with your register page
+import { motion } from "framer-motion"; // ✅ Import Framer Motion
+import "./Stud-Login.css";
 
 const Stud_Login = () => {
   const navigate = useNavigate();
@@ -23,9 +24,7 @@ const Stud_Login = () => {
   };
 
   const handleError = (err) => toast.error(err, { position: "bottom-left" });
-
-  const handleSuccess = (msg) =>
-    toast.success(msg, { position: "bottom-right" });
+  const handleSuccess = (msg) => toast.success(msg, { position: "bottom-right" });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +35,6 @@ const Stud_Login = () => {
         { withCredentials: true }
       );
 
-      // ✅ Store JWT and user info
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("profile", JSON.stringify(data.profile));
@@ -46,7 +44,7 @@ const Stud_Login = () => {
 
       if (role === "student") {
         handleSuccess("Login Successful");
-      } else if (role === "examiner") {
+      } else {
         handleError("Login Failed. Try Again.");
       }
 
@@ -71,7 +69,12 @@ const Stud_Login = () => {
   };
 
   return (
-    <div className="signup-wrapper">
+    <motion.div
+      className="signup-wrapper"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <h2 className="signup-title">Student Login</h2>
       <form className="signup-form" onSubmit={handleSubmit}>
         <div className="form-group">
@@ -110,7 +113,7 @@ const Stud_Login = () => {
         </div>
       </form>
       <ToastContainer />
-    </div>
+    </motion.div>
   );
 };
 
