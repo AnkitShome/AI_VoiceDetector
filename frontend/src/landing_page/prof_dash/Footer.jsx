@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { motion } from "framer-motion"; // ✅ Add this at top
+import { motion } from "framer-motion";
+import Select from "react-select";
 
 const TestFormSection = () => {
   const { profName } = useParams();
@@ -14,16 +15,66 @@ const TestFormSection = () => {
     .join(" ");
 
   const [showForm, setShowForm] = useState(false);
+  const [studentOptions, setStudentOptions] = useState([]);
+  const [selectedStudents, setSelectedStudents] = useState([]);
+
   const [formData, setFormData] = useState({
     professorName: displayName,
     testTitle: "",
     startTime: "",
     endTime: "",
-    studentEmail: "",
     numberOfQuestions: 1,
     questions: [""],
     department: "",
   });
+
+  const [assignEvaluator, setAssignEvaluator] = useState(false);
+  const [evaluatorOptions, setEvaluatorOptions] = useState([]);
+  const [selectedEvaluator, setSelectedEvaluator] = useState(null);
+
+  // Fetch student emails
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const { data } = await axios.get(
+          "http://localhost:5000/api/professor/allStudents",
+          { withCredentials: true }
+        );
+        const options = data.emails.map((email) => ({
+          value: email,
+          label: email,
+        }));
+        setStudentOptions(options);
+      } catch (err) {
+        console.log(err);
+        toast.error("Failed to load student emails");
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  // Fetch professor emails for evaluator dropdown
+  useEffect(() => {
+    const fetchProfessors = async () => {
+      try {
+        const { data } = await axios.get(
+          "http://localhost:5000/api/professor/allProfessors",
+          { withCredentials: true }
+        );
+
+        const options = data.professors.map((prof) => ({
+          value: prof.username, // ✅ send username to backend
+          label: `${prof.username} (${prof.email})`, // or just prof.username
+        }));
+
+        setEvaluatorOptions(options);
+      } catch (err) {
+        toast.error("Failed to load professor usernames");
+      }
+    };
+
+    fetchProfessors();
+  }, []);
 
   const handleQuestionChange = (index, value) => {
     const updated = [...formData.questions];
@@ -43,39 +94,45 @@ const TestFormSection = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const testPayload = {
-        title: formData.testTitle,
-        department: formData.department,
-        start_time: formData.startTime,
-        end_time: formData.endTime,
-        student: formData.studentEmail,
-      };
+      const emails = selectedStudents.map((s) => s.value);
 
-      const createTestRes = await axios.post(
-        "http://localhost:5000/api/professor/createTest",
-        testPayload,
-        { withCredentials: true }
-      );
+      for (let email of emails) {
+        const testPayload = {
+          title: formData.testTitle,
+          department: formData.department,
+          start_time: formData.startTime,
+          end_time: formData.endTime,
+          student: email, // ✅ one student per test
+        };
 
-      const { test, msg: testMsg } = createTestRes.data;
-      const testId = test._id;
-      toast.success(testMsg);
+        const createTestRes = await axios.post(
+          "http://localhost:5000/api/professor/createTest",
+          testPayload,
+          { withCredentials: true }
+        );
 
-      const questionPayload = {
-        testId,
-        questions: formData.questions,
-      };
+        const { test, msg: testMsg } = createTestRes.data;
+        toast.success(`${email}: ${testMsg}`);
 
-      const questionRes = await axios.post(
-        "http://localhost:5000/api/professor/addQuestions",
-        questionPayload,
-        { withCredentials: true }
-      );
+        const testId = test._id;
 
-      toast.success(questionRes.data.msg);
+        const questionPayload = {
+          testId,
+          questions: formData.questions,
+        };
 
-      // ✅ Clear form fields after success
+        const questionRes = await axios.post(
+          "http://localhost:5000/api/professor/addQuestions",
+          questionPayload,
+          { withCredentials: true }
+        );
+
+        // toast.success(`${email}: ${questionRes.data.msg}`);
+      }
+
+      // ✅ Reset form after all submissions
       setFormData({
         professorName: displayName,
         testTitle: "",
@@ -86,16 +143,17 @@ const TestFormSection = () => {
         questions: [""],
         department: "",
       });
+      setSelectedStudents([]); // clear dropdown
+      toast.success("Test Created");
     } catch (err) {
       const errorMsg = err?.response?.data?.msg || "Something went wrong";
-      toast.error(errorMsg);
+      // toast.error(errorMsg);
     }
   };
 
   return (
     <div className="container mt-5">
       <ToastContainer />
-
       <div className="d-flex justify-content-center mb-4">
         <button
           onClick={() => setShowForm(true)}
@@ -116,7 +174,6 @@ const TestFormSection = () => {
           }}
         >
           <div className="d-flex justify-content-between align-items-start flex-wrap">
-            {/* Left Side - Form */}
             <div style={{ flex: "1 1 60%" }}>
               <h3 className="fw-bold mb-3 text-primary">Create Test</h3>
 
@@ -185,15 +242,13 @@ const TestFormSection = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label">Student Email</label>
-                  <input
-                    type="email"
-                    required
-                    className="form-control"
-                    value={formData.studentEmail}
-                    onChange={(e) =>
-                      setFormData({ ...formData, studentEmail: e.target.value })
-                    }
+                  <label className="form-label">Select Students</label>
+                  <Select
+                    options={studentOptions}
+                    isMulti
+                    value={selectedStudents}
+                    onChange={(selected) => setSelectedStudents(selected)}
+                    placeholder="Choose students..."
                   />
                 </div>
 
@@ -224,6 +279,31 @@ const TestFormSection = () => {
                   </div>
                 ))}
 
+                <div className="mb-3 form-check">
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    id="assignEvaluator"
+                    checked={assignEvaluator}
+                    onChange={(e) => setAssignEvaluator(e.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="assignEvaluator">
+                    Assign a human evaluator?
+                  </label>
+                </div>
+
+                {assignEvaluator && (
+                  <div className="mb-3">
+                    <label className="form-label">Select Evaluator</label>
+                    <Select
+                      options={evaluatorOptions}
+                      value={selectedEvaluator}
+                      onChange={(selected) => setSelectedEvaluator(selected)}
+                      placeholder="Choose evaluator..."
+                    />
+                  </div>
+                )}
+
                 <div className="d-flex justify-content-between mt-4">
                   <button type="submit" className="btn btn-success px-4">
                     Submit
@@ -239,7 +319,6 @@ const TestFormSection = () => {
               </form>
             </div>
 
-            {/* Right Side */}
             <div
               style={{
                 flex: "1 1 35%",

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion, useAnimation } from "framer-motion";
+import Select from "react-select"; // ✅ ensure this is installed
 
 const RemoveStudent = () => {
   const [showForm, setShowForm] = useState(false);
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
+  const [studentOptions, setStudentOptions] = useState([]);
+  const [selectedEmails, setSelectedEmails] = useState([]);
   const [message, setMessage] = useState("");
 
   const token = localStorage.getItem("token");
@@ -13,6 +14,36 @@ const RemoveStudent = () => {
   const leftControls = useAnimation();
   const rightControls = useAnimation();
   const ref = useRef();
+
+  // ✅ Fetch student emails
+  useEffect(() => {
+    const fetchEmails = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/professor/allStudents",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (res.data.emails && Array.isArray(res.data.emails)) {
+          const options = res.data.emails.map((email) => ({
+            label: email,
+            value: email,
+          }));
+          setStudentOptions(options);
+        } else {
+          console.warn("Unexpected response:", res.data);
+        }
+      } catch (err) {
+        console.error("Error fetching student emails:", err);
+      }
+    };
+
+    fetchEmails();
+  }, [token]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -29,20 +60,30 @@ const RemoveStudent = () => {
     return () => observer.disconnect();
   }, [leftControls, rightControls]);
 
+  // ✅ Remove selected students
   const handleRemove = async () => {
-    try {
-      const res = await axios.delete("http://localhost:5000/api/professor/removeStudent", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        data: { username, email },
-      });
+    const token = localStorage.getItem("token");
+    console.log("Token before request:", token);
 
+    try {
+      console.log("semail:",selectedEmails);
+      const res = await axios.delete(
+        "http://localhost:5000/api/professor/removeStudent",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          data: {
+            emails: selectedEmails.map((s) => s.value),
+
+          },
+        }
+      );
+      // console.log("semail:",selectedEmails);
+      console.log("Response:", res.data);
       setMessage(res.data.msg);
-      setUsername("");
-      setEmail("");
-      setShowForm(false);
     } catch (err) {
+      console.error("Remove error:", err);
       setMessage(err.response?.data?.msg || "Error occurred");
     }
   };
@@ -69,12 +110,13 @@ const RemoveStudent = () => {
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
             <h3 className="text-primary fw-bold mb-3 d-flex align-items-center">
-              <i className="bi bi-person-x-fill me-2 fs-4"></i> Remove Student?
+              <i className="bi bi-person-x-fill me-2 fs-4"></i> Remove
+              Student(s)
             </h3>
 
             <p className="text-muted mb-4" style={{ fontSize: "1.05rem" }}>
-              You are about to <strong>permanently remove</strong> a student’s access.
-              Please confirm their username and email before proceeding.
+              Select one or more student emails to{" "}
+              <strong>permanently remove</strong> them.
             </p>
 
             <button
@@ -86,28 +128,26 @@ const RemoveStudent = () => {
 
             {showForm && (
               <div className="p-4 border rounded bg-light">
-                <input
-                  type="text"
-                  className="form-control mb-3"
-                  placeholder="Student Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                <label className="form-label">Select Students</label>
+                <Select
+                  options={studentOptions}
+                  isMulti
+                  value={selectedEmails}
+                  onChange={(selected) => setSelectedEmails(selected)}
+                  placeholder="Choose students..."
+                  className="mb-3"
                 />
-                <input
-                  type="email"
-                  className="form-control mb-3"
-                  placeholder="Student Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                <button className="btn btn-primary w-100" onClick={handleRemove}>
+                <button className="btn btn-danger w-100" onClick={handleRemove}>
                   Confirm Remove
                 </button>
               </div>
             )}
 
             {message && (
-              <div className="mt-3 alert alert-info" style={{ maxWidth: "500px" }}>
+              <div
+                className="mt-3 alert alert-info"
+                style={{ maxWidth: "500px" }}
+              >
                 {message}
               </div>
             )}
@@ -130,7 +170,8 @@ const RemoveStudent = () => {
               style={{ maxWidth: "140px", marginBottom: "20px" }}
             />
             <p className="text-secondary" style={{ fontSize: "0.95rem" }}>
-              Removing a student will revoke their test access and delete related records.
+              Removing a student will revoke their test access and delete
+              related records.
             </p>
           </motion.div>
         </div>
