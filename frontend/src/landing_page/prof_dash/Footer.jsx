@@ -58,13 +58,13 @@ const TestFormSection = () => {
     const fetchProfessors = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:5000/api/professor/allProfessors",
+          "http://localhost:5000/api/professor/allProf",
           { withCredentials: true }
         );
 
         const options = data.professors.map((prof) => ({
           value: prof.username, // ✅ send username to backend
-          label: `${prof.username} (${prof.email})`, // or just prof.username
+          label: prof.username, // or just prof.username
         }));
 
         setEvaluatorOptions(options);
@@ -104,7 +104,7 @@ const TestFormSection = () => {
           department: formData.department,
           start_time: formData.startTime,
           end_time: formData.endTime,
-          student: email, // ✅ one student per test
+          student: email,
         };
 
         const createTestRes = await axios.post(
@@ -123,16 +123,30 @@ const TestFormSection = () => {
           questions: formData.questions,
         };
 
-        const questionRes = await axios.post(
+        await axios.post(
           "http://localhost:5000/api/professor/addQuestions",
           questionPayload,
           { withCredentials: true }
         );
 
-        // toast.success(`${email}: ${questionRes.data.msg}`);
+        // ✅ Assign evaluator if selected
+        if (assignEvaluator && selectedEvaluator) {
+          const assignPayload = {
+            testId,
+            evaluatorUsername: selectedEvaluator.value, // value = username
+          };
+
+          // await axios.post(
+          //   "http://localhost:5000/api/professor/assignEvaluator",
+          //   assignPayload,
+          //   { withCredentials: true }
+          // );
+
+          toast.success(`Evaluator assigned to test for ${email}`);
+        }
       }
 
-      // ✅ Reset form after all submissions
+      // ✅ Reset everything
       setFormData({
         professorName: displayName,
         testTitle: "",
@@ -143,11 +157,13 @@ const TestFormSection = () => {
         questions: [""],
         department: "",
       });
-      setSelectedStudents([]); // clear dropdown
-      toast.success("Test Created");
+      setSelectedStudents([]);
+      setSelectedEvaluator(null);
+      setAssignEvaluator(false);
+      toast.success("All tests created and evaluators assigned.");
     } catch (err) {
       const errorMsg = err?.response?.data?.msg || "Something went wrong";
-      // toast.error(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
