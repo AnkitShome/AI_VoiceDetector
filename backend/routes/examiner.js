@@ -6,6 +6,9 @@ import {
   joinTest,
   getUpcomingTestsForStudent,
   removeStudent,
+  getAllStudentEmails,
+  getAllProfEmails,
+  // assignEvaluator,
 } from "../controllers/testController.js";
 import {
   ensureAuthenticated,
@@ -49,5 +52,12 @@ router.get("/showTest",ensureAuthenticated_jw ,getUpcomingTestsForStudent);
 //6 delete student
 router.delete("/removeStudent",verifyToken,  removeStudent);
 
+//get emails of all registered students
+router.get("/allStudents", getAllStudentEmails);
 
+//get emails of all registered prof
+router.get("/allProf", getAllProfEmails);
+
+//assign evaluator
+// router.post("/assignEvaluator", assignEvaluator);
 export default router;

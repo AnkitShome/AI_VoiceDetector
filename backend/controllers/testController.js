@@ -4,16 +4,26 @@ import Student from "../models/Student.js";
 import User from "../models/User.js";
 import TestAttempt from "../models/TestAttempt.js";
 import { v4 as uuidv4 } from "uuid";
+import nodemailer from "nodemailer"; // or const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "Gmail", // or "Outlook", "Yahoo", or use `host`, `port`, and `auth` manually
+  auth: {
+    user: "your-email@gmail.com",
+    pass: "your-app-password", // ✅ NOT your Gmail password – use App Password or env var
+  },
+});
+
 
 const createTest = async (req, res) => {
   try {
     const { title, start_time, end_time, student } = req.body;
 
     // ✅ Check if student exists by email
-    const studentUser = await User.findOne({ email: student });
-    if (!studentUser) {
-      return res.status(404).json({ msg: "Student not found" });
-    }
+    // const studentUser = await User.findOne({ email: student });
+    // if (!studentUser) {
+    //   return res.status(404).json({ msg: "Student not found" });
+    // }
 
     const sharedLinkId = uuidv4();
 
@@ -296,22 +306,106 @@ const getUpcomingTestsForStudent = async (req, res) => {
 
 export const removeStudent = async (req, res) => {
   try {
-    const { username, email } = req.body;
+    const { emails } = req.body;
 
-    const user = await User.findOne({ username, email, role: "student" });
-
-    if (!user) {
-      return res.status(404).json({ msg: "Student not found" });
+    if (!emails || !Array.isArray(emails)) {
+      return res.status(400).json({ msg: "Invalid email list" });
     }
 
-    await Student.deleteOne({ user: user._id });
-    await User.deleteOne({ _id: user._id });
+    for (const email of emails) {
+      const user = await User.findOne({ email, role: "student" });
 
-    return res.status(200).json({ msg: "Student removed successfully" });
+      if (user) {
+        await Student.deleteOne({ user: user._id });
+        await User.deleteOne({ _id: user._id });
+      }
+    }
+
+    return res
+      .status(200)
+      .json({ msg: "Selected student(s) removed successfully." });
   } catch (error) {
-    return res.status(500).json({ msg: "Error removing student", error: error.message });
+    return res
+      .status(500)
+      .json({ msg: "Error removing student(s)", error: error.message });
   }
 };
+
+//get all emails of registered students
+const getAllStudentEmails = async (req, res) => {
+  try {
+    const students = await User.find({ role: "student" }).select("email");
+    const emails = students.map((student) => student.email);
+    res.json({ emails });
+  } catch (err) {
+    res.status(500).json({ msg: "Failed to fetch student emails" });
+  }
+};
+
+//get all emails of registered prof
+const getAllProfEmails = async (req, res) => {
+  try {
+    const professors = await User.find({ role: "examiner" }).select("email username");
+    res.json({ professors }); // 🔄 key should match what frontend expects
+  } catch (err) {
+    res.status(500).json({ msg: "Failed to fetch prof emails and usernames" });
+  }
+};
+
+
+// export const assignEvaluator = async (req, res) => {
+//   const { testId, evaluatorUsername } = req.body;
+
+//   const evaluator = await User.findOne({
+//     username: evaluatorUsername,
+//     role: "examiner",
+//   });
+//   if (!evaluator) {
+//     console.log("evaluator", evaluator);
+//     return res.status(404).json({ msg: "Evaluator not found" });
+//   }
+
+//   const test = await Test.findById(testId);
+//   if (!test) {
+//     return res.status(404).json({ msg: "Test not found" });
+//   }
+
+//   // // Optional: update test with evaluator info
+//   // test.evaluator = evaluator._id;
+//   // await test.save();
+
+//   // Send email
+//   await sendEvaluatorEmail({
+//     to: evaluator.email,
+//     testTitle: test.title,
+//     evaluatorUsername,
+//     tempPassword: "some-password", // optional
+//     link: `http://localhost:3000/evaluator/${test._id}`,
+//   });
+
+//   return res.status(200).json({ msg: "Evaluator assigned and email sent." });
+// };
+
+// const sendEvaluatorEmail = async ({
+//   to,
+//   testTitle,
+//   evaluatorUsername,
+//   tempPassword,
+//   link,
+// }) => {
+//   await transporter.sendMail({
+//     from: "admin@yourapp.com",
+//     to,
+//     subject: `You’ve been assigned as evaluator for: ${testTitle}`,
+//     html: `
+//       <h3>Hello ${evaluatorUsername},</h3>
+//       <p>You’ve been selected to evaluate the test titled <strong>${testTitle}</strong>.</p>
+//       <p><strong>Login:</strong> ${evaluatorUsername}</p>
+//       <p><strong>Password:</strong> ${tempPassword}</p>
+//       <p>Access the evaluator page here: <a href="${link}">Evaluator Link</a></p>
+//     `,
+//   });
+// };
 
 export {
   createTest,
@@ -319,4 +413,6 @@ export {
   inviteStudents,
   joinTest,
   getUpcomingTestsForStudent,
+  getAllStudentEmails,
+  getAllProfEmails,
 };
