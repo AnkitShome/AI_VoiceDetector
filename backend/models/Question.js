@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
-const questionSchema = new mongoose.Schema({
-   test_id: { type: mongoose.Types.ObjectId, ref: 'Test', required: true },
-   question_text: { type: String, required: true }
-}, { timestamps: true})
+const QuestionSchema = new mongoose.Schema({
+   testId: { type: mongoose.Schema.Types.ObjectId, ref: 'Test', required: true },
+   questionText: { type: String, required: true }
+}, { timestamps: true });
 
-export default mongoose.model('Question', questionSchema)
+const Question = mongoose.model('Question', QuestionSchema);
+export default Question;

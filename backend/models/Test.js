@@ -2,14 +2,18 @@ import mongoose from 'mongoose';
 
 const TestSchema = new mongoose.Schema({
    title: { type: String, required: true },
-   examiner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-   department: { type: String }, 
-   sharedLinkId: { type: String,unique:true }, 
-   questions: [{ type: String }],
-   student: { type: String }, 
+   examinerId: { type: mongoose.Schema.Types.ObjectId, ref: "Examiner", required: true },
+   department: { type: String },
+   sharedLinkId: { type: String, unique: true },
+   questions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Question" }],
+   students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
    createdAt: { type: Date, default: Date.now },
-   start_time: { type: Date, required: true },
-   end_time: { type: Date, required: true }
-});
+   startTime: { type: Date, required: true },
+   endTime: { type: Date, required: true }
+}, { timestamps: true });
 
-export default mongoose.model('Test', TestSchema);
+// TestSchema.index({ examinerId: 1 });
+// TestSchema.index({ department: 1 });
+
+const Test = mongoose.model('Test', TestSchema);
+export default Test;

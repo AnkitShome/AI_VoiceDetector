@@ -3,6 +3,8 @@ import session from 'express-session';
 import passport from 'passport';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from "cookie-parser";
+
 
 import initializePassport from './config/passport.js'; // ✅ import the function only
 import connectDB from './config/mongo.js';
@@ -14,19 +16,20 @@ import examinerRoutes from './routes/examiner.js';
 // ... all your imports and setup above
 
 dotenv.config();
-connectDB(); 
-initializePassport(passport); 
+connectDB();
+initializePassport(passport);
 
 const app = express();
 
 // ✅ 1. Middleware FIRST
 app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true
+   origin: "http://localhost:3000",
+   credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use(session({
    secret: process.env.SESSION_SECRET || 'defaultSecret',
