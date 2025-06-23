@@ -1,0 +1,24 @@
+// routes/test.js
+import express from "express";
+import {
+  createTest,
+  addQuestions,
+  addQuestion,
+} from "../controllers/testController.js";
+import {
+  ensureAuthenticated,
+  authorizeRoles,
+} from "../middleware/authMiddleware.js";
+
+const router = express.Router();
+
+// Create a new test
+router.post("/create", ensureAuthenticated, authorizeRoles("examiner"), createTest);
+
+// Add questions (bulk)
+router.post("/add-questions/:testId", ensureAuthenticated, authorizeRoles("examiner"), addQuestions);
+
+// Add single question
+router.post("/add-question/:testId", ensureAuthenticated, authorizeRoles("examiner"), addQuestion);
+
+export default router;

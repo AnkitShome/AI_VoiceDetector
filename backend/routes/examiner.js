@@ -1,63 +1,20 @@
+// routes/examiner.js
 import express from "express";
 import {
-   createTest,
-   addQuestions,
    inviteStudents,
-   joinTest,
-   getUpcomingTestsForStudent,
    removeStudent,
-   getAllStudentEmails,
-   getAllProfEmails,
-   // assignEvaluator,
-} from "../controllers/testController.js";
+} from "../controllers/examinerController.js";
 import {
    ensureAuthenticated,
-   ensureAuthenticated_jw,
    authorizeRoles,
-   verifyToken,
 } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// 1. Create a new test
-router.post(
-   "/createTest",
-   ensureAuthenticated,
-   authorizeRoles("examiner"),
-   createTest
-);
+// Invite students to a test
+router.post("/invite/:testId", ensureAuthenticated, authorizeRoles("examiner"), inviteStudents);
 
-// 2. Add questions to a test
-router.post(
-   "/addQuestions",
-   ensureAuthenticated,
-   authorizeRoles("examiner"),
-   addQuestions
-);
+// Remove student from a test
+router.delete("/remove/:testId", ensureAuthenticated, authorizeRoles("examiner"), removeStudent);
 
-// 3. Invite a student to a test
-router.post(
-   "/inviteStudent",
-   ensureAuthenticated,
-   authorizeRoles("examiner"),
-   inviteStudents
-);
-
-// 4. Student joins a test (no role restriction)
-router.post("/joinTest", ensureAuthenticated, joinTest);
-
-//5. Test is visible to student
-router.get("/showTest", ensureAuthenticated_jw, getUpcomingTestsForStudent);
-
-//6 delete student
-router.delete("/removeStudent", verifyToken, removeStudent);
-
-//get emails of all registered students
-router.get("/allStudents", getAllStudentEmails);
-
-//get emails of all registered prof
-router.get("/allProf", getAllProfEmails);
-
-//assign evaluator
-// router.post("/assignEvaluator", assignEvaluator);
 export default router;
