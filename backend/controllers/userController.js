@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import Student from "../models/Student.js";
 import Examiner from "../models/Examiner.js";
 import OTP from "../models/OTP.js";
+
+import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import otpGenerator from "otp-generator";
@@ -139,6 +141,88 @@ export const googleLogin = async (req, res) => {
       res.status(200).json({ msg: "Google login successful", user: userObj });
    } catch (err) {
       res.status(400).json({ msg: "Google login failed", error: err.message });
+   }
+};
+
+
+export const updateUser = async (req, res) => {
+   try {
+      const userId = req.user._id; // use _id from JWT/middleware
+
+      const {
+         name,
+         username,
+         email,
+         password,
+         role,
+         studentData,
+         examinerData,
+      } = req.body;
+
+      // Only update fields that are provided
+      let updateFields = {};
+      if (name) updateFields.name = name;
+      if (username) updateFields.username = username;
+      if (email) updateFields.email = email;
+      if (role) updateFields.role = role;
+      if (password) updateFields.password = await bcrypt.hash(password, 10);
+
+      // Update the User document
+      const updatedUser = await User.findByIdAndUpdate(
+         userId,
+         { $set: updateFields },
+         { new: true }
+      );
+
+      if (!updatedUser) return res.status(404).json({ msg: "User not found" });
+
+      // Update/create Student/Examiner if data provided
+      if (role === "student" && studentData) {
+         const parsed =
+            typeof studentData === "string"
+               ? JSON.parse(studentData)
+               : studentData;
+         let student = await Student.findOne({ user: userId });
+         if (student) {
+            // Update fields if student already exists
+            if (parsed.scholarId) student.scholarId = parsed.scholarId;
+            if (parsed.department) student.department = parsed.department;
+            await student.save();
+         } else {
+            // Create if doesn't exist
+            await Student.create({
+               user: userId,
+               scholarId: parsed.scholarId,
+               department: parsed.department,
+            });
+         }
+         // Remove examiner if switching from examiner to student
+         await Examiner.deleteMany({ user: userId });
+      }
+      if (role === "examiner" && examinerData) {
+         const parsed =
+            typeof examinerData === "string"
+               ? JSON.parse(examinerData)
+               : examinerData;
+         let examiner = await Examiner.findOne({ user: userId });
+         if (examiner) {
+            if (parsed.department) examiner.department = parsed.department;
+            await examiner.save();
+         } else {
+            await Examiner.create({
+               user: userId,
+               department: parsed.department,
+            });
+         }
+         // Remove student if switching from student to examiner
+         await Student.deleteMany({ user: userId });
+      }
+
+      const { password: pw, ...userObj } = updatedUser.toObject();
+      res.status(200).json({ msg: "User updated", user: userObj });
+   } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: "Update failed", error: err.message });
    }
 };
 
