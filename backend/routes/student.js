@@ -1,29 +1,19 @@
+
 // routes/student.js
 import express from "express";
 import {
-   joinTest,
-   startTest,
-   submitTest,
-   getUpcomingTestsForStudent,
+  joinTest,
+  startTest,
+  submitTest,
+  getUpcomingTestsForStudent,
 } from "../controllers/studentController.js";
-import {
-   ensureAuthenticated,
-   ensureAuthenticated_jw,
-   authorizeRoles,
-} from "../middleware/authMiddleware.js";
+import {verifyToken,authorizeRoles} from "../middlewares/authMiddleware.js"
 
 const router = express.Router();
 
-// Student joins a test
-router.post("/join/:testId", ensureAuthenticated, authorizeRoles("student"), joinTest);
-
-// Student starts a test attempt
-router.post("/start/:testId", ensureAuthenticated, authorizeRoles("student"), startTest);
-
-// Student submits test attempt
-router.post("/submit/:testId", ensureAuthenticated, authorizeRoles("student"), submitTest);
-
-// Get upcoming tests for logged-in student
-router.get("/upcoming", ensureAuthenticated_jw, authorizeRoles("student"), getUpcomingTestsForStudent);
+router.get("/upcoming", verifyToken, authorizeRoles("student"), getUpcomingTestsForStudent);
+router.post("/join/:testId", verifyToken, authorizeRoles("student"), joinTest);
+router.post("/start/:testId", verifyToken, authorizeRoles("student"), startTest);
+router.post("/submit/:testId", verifyToken, authorizeRoles("student"), submitTest);
 
 export default router;

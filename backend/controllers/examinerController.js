@@ -1,90 +1,62 @@
-import User from "../models/User";
-import Student from "../models/Student";
-import Examiner from "../models/Examiner";
-import Test from "../models/Test";
-import Question from "../models/Question";
+import User from "../models/User.js";
+import Test from "../models/Test.js";
+import Student from "../models/Student.js";
+import Examiner from "../models/Examiner.js";
 
-const inviteStudents = async (req, res) => {
+export const inviteStudents = async (req, res) => {
    try {
       const { testId } = req.params;
       let { studentEmails } = req.body;
       const { user } = req;
 
-      if (typeof studentEmails === "string") {
+      if (typeof studentEmails === "string")
          studentEmails = [studentEmails];
-      }
 
-      if (!Array.isArray(studentEmails) || studentEmails.length === 0) {
-         return res.status(400).json({
-            msg: "Student emails are required and must be a non-empty array or string",
-         });
-      }
+      if (!Array.isArray(studentEmails) || !studentEmails.length)
+         return res.status(400).json({ msg: "Provide at least one student email" });
 
       const test = await Test.findById(testId);
+      if (test.examiner.toString() !== user._id.toString())
+         return res.status(401).json({ msg: "Unauthorized" });
 
-      if (test.examinerId.toString() !== user._id.toString()) {
-         return res.status(401).json({ msg: "Unauthorized" })
+      const users = await User.find({ email: { $in: studentEmails }, role: "student" });
+
+      if (!user) {
+         return res.status(404).json({ msg: "User not found" })
       }
 
-      const users = await User.find({
-         email: { $in: studentEmails },
-         role: "student"
-      })
+      const students = await Student.find({ user: { $in: users.map(u => u._id) } });
 
-      const students = await Student.find({
-         user: { $in: users.map(u => u._id) }
-      });
-
-      for (const student of students) {
-         if (!test.students.includes(student._id)) {
-            test.students.push(student._id);
-         }
+      for (const s of students) {
+         if (!test.students.includes(s._id)) test.students.push(s._id);
       }
-
       await test.save();
-
-      return res.status(200).json({ msg: "Students added to Test" })
-
-   } catch (error) {
-      console.log(error)
-      return res.status(500).json({ msg: "Internal error occured" })
+      res.status(200).json({ msg: "Students added to Test" });
+   } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: "Internal error occured" });
    }
-}
+};
 
-
-const removeStudent = async (req, res) => {
+export const removeStudent = async (req, res) => {
    try {
       const { testId } = req.params;
       const { studentId } = req.body;
       const { user } = req;
 
-      const examiner = await Examiner.findOne({ userId: user._id });
+      const examiner = await Examiner.findOne({ user: user._id });
       if (!examiner) return res.status(401).json({ msg: "Unauthorized" });
 
       const test = await Test.findById(testId);
       if (!test) return res.status(404).json({ msg: "Test not found" });
-
-      if (test.examinerId.toString() !== examiner._id.toString()) {
+      if (test.examiner.toString() !== examiner._id.toString())
          return res.status(401).json({ msg: "Unauthorized" });
-      }
 
-      const student = await Student.findById(studentId);
-      if (!student) return res.status(404).json({ msg: "Student not found" });
-
-      test.students = test.students.filter(
-         (id) => id.toString() !== student._id.toString()
-      );
+      test.students = test.students.filter(id => id.toString() !== studentId);
       await test.save();
-
-      return res.status(200).json({ msg: "Student removed from Test" });
-   } catch (error) {
-      console.log(error);
-      return res.status(500).json({ msg: "Internal error occurred" });
+      res.status(200).json({ msg: "Student removed from Test" });
+   } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: "Internal error occurred" });
    }
 };
-
-
-export {
-   inviteStudents,
-   removeStudent
-}

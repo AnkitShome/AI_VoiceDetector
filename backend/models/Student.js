@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const StudentSchema = new mongoose.Schema({
-   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
    scholarId: { type: String, required: true, unique: true },
    department: { type: String, required: true },
 }, { timestamps: true });

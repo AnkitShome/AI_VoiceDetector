@@ -1,16 +1,12 @@
+
 // routes/evaluator.js
 import express from "express";
 import { sendEvaluationLink } from "../controllers/evaluatorController.js";
-import { ensureAuthenticated, authorizeRoles } from "../middleware/authMiddleware.js";
+
+import {verifyToken,authorizeRoles} from "../middlewares/authMiddleware.js"
 
 const router = express.Router();
 
-// Send evaluation link to examiner
-router.post(
-   "/send-eval-link/:testId",
-   ensureAuthenticated,
-   authorizeRoles("examiner"),
-   sendEvaluationLink
-);
+router.post("/send-link/:testId", verifyToken, authorizeRoles("examiner"), sendEvaluationLink);
 
 export default router;
