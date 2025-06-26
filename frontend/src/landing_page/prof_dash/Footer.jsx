@@ -1,362 +1,349 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import axios from "axios";
+import Select from "react-select";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { motion } from "framer-motion";
-import Select from "react-select";
 
-const TestFormSection = () => {
-  const { profName } = useParams();
+// Fetch assigned students for the test
+const fetchTestStudents = async (testId) => {
+   const { data } = await axios.get(
+      `http://localhost:5000/api/examiner/test/${testId}/students`,
+      { withCredentials: true }
+   );
+   // Return as [{value, label}]
+   return data.students.map((s) => ({
+      value: s._id,
+      label: `${s.name} (${s.email})`,
+   }));
+};
 
-  const displayName = profName
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+// Section for removing students from test
+function RemoveStudentsSection({ testId, refreshFlag, onRemoved }) {
+   const [testStudents, setTestStudents] = useState([]);
+   const [selected, setSelected] = useState(null);
 
-  const [showForm, setShowForm] = useState(false);
-  const [studentOptions, setStudentOptions] = useState([]);
-  const [selectedStudents, setSelectedStudents] = useState([]);
+   useEffect(() => {
+      if (!testId) return;
+      fetchTestStudents(testId).then(setTestStudents);
+   }, [testId, refreshFlag]);
 
-  const [formData, setFormData] = useState({
-    professorName: displayName,
-    testTitle: "",
-    startTime: "",
-    endTime: "",
-    numberOfQuestions: 1,
-    questions: [""],
-    department: "",
-  });
-
-  const [assignEvaluator, setAssignEvaluator] = useState(false);
-  const [evaluatorOptions, setEvaluatorOptions] = useState([]);
-  const [selectedEvaluator, setSelectedEvaluator] = useState(null);
-
-  // Fetch student emails
-  useEffect(() => {
-    const fetchStudents = async () => {
+   const handleRemove = async () => {
+      if (!selected) return;
       try {
-        const { data } = await axios.get(
-          "http://localhost:5000/api/professor/allStudents",
-          { withCredentials: true }
-        );
-        const options = data.emails.map((email) => ({
-          value: email,
-          label: email,
-        }));
-        setStudentOptions(options);
+         await axios.post(
+            `http://localhost:5000/api/examiner/remove/${testId}`,
+            { studentId: selected.value },
+            { withCredentials: true }
+         );
+         toast.success("Student removed from test!");
+         setSelected(null);
+         if (onRemoved) onRemoved();
       } catch (err) {
-        console.log(err);
-        toast.error("Failed to load student emails");
+         toast.error(err?.response?.data?.msg || "Failed to remove student.");
       }
-    };
-    fetchStudents();
-  }, []);
+   };
 
-  // Fetch professor emails for evaluator dropdown
-  useEffect(() => {
-    const fetchProfessors = async () => {
-      try {
-        const { data } = await axios.get(
-          "http://localhost:5000/api/professor/allProf",
-          { withCredentials: true }
-        );
+   if (testStudents.length === 0)
+      return <div className="mb-3">No students assigned to this test.</div>;
 
-        const options = data.professors.map((prof) => ({
-          value: prof.username, // ✅ send username to backend
-          label: prof.username, // or just prof.username
-        }));
-
-        setEvaluatorOptions(options);
-      } catch (err) {
-        toast.error("Failed to load professor usernames");
-      }
-    };
-
-    fetchProfessors();
-  }, []);
-
-  const handleQuestionChange = (index, value) => {
-    const updated = [...formData.questions];
-    updated[index] = value;
-    setFormData({ ...formData, questions: updated });
-  };
-
-  const handleNumQuestionsChange = (e) => {
-    const num = parseInt(e.target.value);
-    const updatedQuestions = Array(num).fill("");
-    setFormData({
-      ...formData,
-      numberOfQuestions: num,
-      questions: updatedQuestions,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const emails = selectedStudents.map((s) => s.value);
-
-      for (let email of emails) {
-        const testPayload = {
-          title: formData.testTitle,
-          department: formData.department,
-          start_time: formData.startTime,
-          end_time: formData.endTime,
-          student: email,
-        };
-
-        const createTestRes = await axios.post(
-          "http://localhost:5000/api/professor/createTest",
-          testPayload,
-          { withCredentials: true }
-        );
-
-        const { test, msg: testMsg } = createTestRes.data;
-        toast.success(`${email}: ${testMsg}`);
-
-        const testId = test._id;
-
-        const questionPayload = {
-          testId,
-          questions: formData.questions,
-        };
-
-        await axios.post(
-          "http://localhost:5000/api/professor/addQuestions",
-          questionPayload,
-          { withCredentials: true }
-        );
-
-        // ✅ Assign evaluator if selected
-        if (assignEvaluator && selectedEvaluator) {
-          const assignPayload = {
-            testId,
-            evaluatorUsername: selectedEvaluator.value, // value = username
-          };
-
-          // await axios.post(
-          //   "http://localhost:5000/api/professor/assignEvaluator",
-          //   assignPayload,
-          //   { withCredentials: true }
-          // );
-
-          toast.success(`Evaluator assigned to test for ${email}`);
-        }
-      }
-
-      // ✅ Reset everything
-      setFormData({
-        professorName: displayName,
-        testTitle: "",
-        startTime: "",
-        endTime: "",
-        studentEmail: "",
-        numberOfQuestions: 1,
-        questions: [""],
-        department: "",
-      });
-      setSelectedStudents([]);
-      setSelectedEvaluator(null);
-      setAssignEvaluator(false);
-      toast.success("All tests created and evaluators assigned.");
-    } catch (err) {
-      const errorMsg = err?.response?.data?.msg || "Something went wrong";
-      toast.error(errorMsg);
-    }
-  };
-
-  return (
-    <div className="container mt-5">
-      <ToastContainer />
-      <div className="d-flex justify-content-center mb-4">
-        <button
-          onClick={() => setShowForm(true)}
-          className="btn btn-primary px-4 py-2 shadow"
-        >
-          Create Test
-        </button>
+   return (
+      <div className="mb-4">
+         <h5>Remove Student from Test</h5>
+         <Select
+            options={testStudents}
+            value={selected}
+            onChange={setSelected}
+            placeholder="Select student to remove"
+         />
+         <button
+            className="btn btn-danger mt-2"
+            type="button"
+            onClick={handleRemove}
+            disabled={!selected}
+         >
+            Remove Student
+         </button>
       </div>
+   );
+}
 
-      {showForm && (
-        <div
-          className="card shadow p-5 hover-scale-wrapper"
-          style={{
-            maxWidth: "1240px",
-            margin: "auto",
-            transition: "transform 0.3s ease",
-            borderRadius: "20px",
-          }}
-        >
-          <div className="d-flex justify-content-between align-items-start flex-wrap">
-            <div style={{ flex: "1 1 60%" }}>
-              <h3 className="fw-bold mb-3 text-primary">Create Test</h3>
+// Section for inviting students to test
+function InviteStudentsSection({ testId, onInvited }) {
+   const [studentOptions, setStudentOptions] = useState([]);
+   const [selectedStudents, setSelectedStudents] = useState([]);
+   const [refreshFlag, setRefreshFlag] = useState(false);
 
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">Professor Name</label>
-                  <input
-                    type="text"
-                    value={formData.professorName}
-                    disabled
-                    className="form-control bg-light"
-                  />
-                </div>
+   useEffect(() => {
+      const fetchStudents = async () => {
+         const { data } = await axios.get(
+            "http://localhost:5000/api/details/allStudentEmails",
+            { withCredentials: true }
+         );
+         setStudentOptions(
+            data.emails.map((email) => ({ value: email, label: email }))
+         );
+      };
+      fetchStudents();
+   }, [refreshFlag]);
 
-                <div className="mb-3">
-                  <label className="form-label">Department</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-control"
-                    value={formData.department}
-                    onChange={(e) =>
-                      setFormData({ ...formData, department: e.target.value })
-                    }
-                  />
-                </div>
+   const handleAddStudents = async () => {
+      if (selectedStudents.length === 0) return toast.error("No students selected.");
+      try {
+         const studentEmails = selectedStudents.map((s) => s.value);
+         await axios.post(
+            `http://localhost:5000/api/examiner/invite/${testId}`,
+            { studentEmails },
+            { withCredentials: true }
+         );
+         toast.success("Students added to test!");
+         setSelectedStudents([]);
+         setRefreshFlag((f) => !f);
+         if (onInvited) onInvited();
+      } catch (err) {
+         toast.error(err?.response?.data?.msg || "Failed to add students.");
+      }
+   };
 
-                <div className="mb-3">
-                  <label className="form-label">Test Title</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-control"
-                    value={formData.testTitle}
-                    onChange={(e) =>
-                      setFormData({ ...formData, testTitle: e.target.value })
-                    }
-                  />
-                </div>
+   return (
+      <div className="mb-4">
+         <h5>Add Students to Test</h5>
+         <Select
+            options={studentOptions}
+            isMulti
+            value={selectedStudents}
+            onChange={setSelectedStudents}
+            placeholder="Choose students..."
+         />
+         <button
+            className="btn btn-success mt-2"
+            type="button"
+            onClick={handleAddStudents}
+         >
+            Add Students
+         </button>
+      </div>
+   );
+}
 
-                <div className="row mb-3">
-                  <div className="col">
-                    <label className="form-label">Start Time</label>
-                    <input
-                      type="datetime-local"
-                      required
-                      className="form-control"
-                      value={formData.startTime}
-                      onChange={(e) =>
-                        setFormData({ ...formData, startTime: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="col">
-                    <label className="form-label">End Time</label>
-                    <input
-                      type="datetime-local"
-                      required
-                      className="form-control"
-                      value={formData.endTime}
-                      onChange={(e) =>
-                        setFormData({ ...formData, endTime: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
+// Section for adding questions
+function AddQuestionsSection({ testId }) {
+   const [questions, setQuestions] = useState([""]);
+   const [numQuestions, setNumQuestions] = useState(1);
 
-                <div className="mb-3">
-                  <label className="form-label">Select Students</label>
-                  <Select
-                    options={studentOptions}
-                    isMulti
-                    value={selectedStudents}
-                    onChange={(selected) => setSelectedStudents(selected)}
-                    placeholder="Choose students..."
-                  />
-                </div>
+   const handleNumChange = (e) => {
+      const n = Math.max(1, parseInt(e.target.value) || 1);
+      setNumQuestions(n);
+      setQuestions((q) => {
+         const arr = Array(n).fill("");
+         q.forEach((item, idx) => (arr[idx] = item));
+         return arr;
+      });
+   };
 
-                <div className="mb-3">
-                  <label className="form-label">Number of Questions</label>
-                  <input
-                    type="number"
-                    min="1"
-                    required
-                    className="form-control"
-                    value={formData.numberOfQuestions}
-                    onChange={handleNumQuestionsChange}
-                  />
-                </div>
+   const handleQuestionChange = (idx, value) => {
+      setQuestions((q) => {
+         const arr = [...q];
+         arr[idx] = value;
+         return arr;
+      });
+   };
 
-                {formData.questions.map((q, idx) => (
-                  <div className="mb-3" key={idx}>
-                    <label className="form-label">Question {idx + 1}</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-control"
-                      value={q}
-                      onChange={(e) =>
-                        handleQuestionChange(idx, e.target.value)
-                      }
-                    />
-                  </div>
-                ))}
+   const handleAddQuestions = async () => {
+      const filtered = questions.map((q) => q.trim()).filter((q) => q);
+      if (filtered.length === 0) return toast.error("Add at least one question.");
+      try {
+         await axios.post(
+            `http://localhost:5000/api/test/${testId}/questions`,
+            { questions: filtered },
+            { withCredentials: true }
+         );
+         toast.success("Questions added!");
+         setQuestions([""]);
+         setNumQuestions(1);
+      } catch (err) {
+         toast.error(err?.response?.data?.msg || "Failed to add questions.");
+      }
+   };
 
-                <div className="mb-3 form-check">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    id="assignEvaluator"
-                    checked={assignEvaluator}
-                    onChange={(e) => setAssignEvaluator(e.target.checked)}
-                  />
-                  <label className="form-check-label" htmlFor="assignEvaluator">
-                    Assign a human evaluator?
-                  </label>
-                </div>
+   return (
+      <div className="mb-4">
+         <h5>Add Questions to Test</h5>
+         <div className="mb-2">
+            <label>Number of Questions</label>
+            <input
+               type="number"
+               min={1}
+               value={numQuestions}
+               onChange={handleNumChange}
+               className="form-control w-auto"
+            />
+         </div>
+         {Array.from({ length: numQuestions }).map((_, idx) => (
+            <div className="mb-2" key={idx}>
+               <label>Question {idx + 1}</label>
+               <input
+                  className="form-control"
+                  value={questions[idx] || ""}
+                  onChange={(e) => handleQuestionChange(idx, e.target.value)}
+               />
+            </div>
+         ))}
+         <button
+            className="btn btn-success mt-2"
+            type="button"
+            onClick={handleAddQuestions}
+         >
+            Add Questions
+         </button>
+      </div>
+   );
+}
 
-                {assignEvaluator && (
-                  <div className="mb-3">
-                    <label className="form-label">Select Evaluator</label>
-                    <Select
-                      options={evaluatorOptions}
-                      value={selectedEvaluator}
-                      onChange={(selected) => setSelectedEvaluator(selected)}
-                      placeholder="Choose evaluator..."
-                    />
-                  </div>
-                )}
+// MAIN COMPONENT
+const TestFormSection = () => {
+   const [showForm, setShowForm] = useState(false);
+   const [testId, setTestId] = useState(null);
+   const [refreshStudentsFlag, setRefreshStudentsFlag] = useState(false);
 
-                <div className="d-flex justify-content-between mt-4">
-                  <button type="submit" className="btn btn-success px-4">
-                    Submit
-                  </button>
+   const [formData, setFormData] = useState({
+      testTitle: "",
+      department: "",
+      startTime: "",
+      endTime: "",
+   });
+
+   const handleChange = (e) => {
+      setFormData((f) => ({
+         ...f,
+         [e.target.name]: e.target.value,
+      }));
+   };
+
+   const handleCreateTest = async (e) => {
+      e.preventDefault();
+      try {
+         const res = await axios.post(
+            "http://localhost:5000/api/test/create",
+            {
+               title: formData.testTitle,
+               department: formData.department,
+               startTime: formData.startTime,
+               endTime: formData.endTime,
+            },
+            { withCredentials: true }
+         );
+         toast.success("Test created!");
+         setTestId(res.data.test._id);
+         setShowForm(false);
+      } catch (err) {
+         console.log(err)
+         toast.error(
+            err?.response?.data?.msg || "Failed to create test. Check your inputs."
+         );
+      }
+   };
+
+   return (
+      <div className="container mt-5">
+         <ToastContainer />
+         {!testId && (
+            <>
+               <div className="d-flex justify-content-center mb-4">
                   <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="btn btn-danger px-4"
+                     onClick={() => setShowForm(true)}
+                     className="btn btn-primary px-4 py-2 shadow"
                   >
-                    Cancel
+                     Create Test
                   </button>
-                </div>
-              </form>
-            </div>
+               </div>
+               {showForm && (
+                  <div className="card shadow p-5 hover-scale-wrapper" style={{
+                     maxWidth: "1240px",
+                     margin: "auto",
+                     transition: "transform 0.3s ease",
+                     borderRadius: "20px",
+                  }}>
+                     <h3 className="fw-bold mb-3 text-primary">Create Test</h3>
+                     <form onSubmit={handleCreateTest}>
+                        <div className="mb-3">
+                           <label className="form-label">Test Title</label>
+                           <input
+                              className="form-control"
+                              name="testTitle"
+                              value={formData.testTitle}
+                              onChange={handleChange}
+                              required
+                           />
+                        </div>
+                        <div className="mb-3">
+                           <label className="form-label">Department</label>
+                           <input
+                              className="form-control"
+                              name="department"
+                              value={formData.department}
+                              onChange={handleChange}
+                              required
+                           />
+                        </div>
+                        <div className="mb-3">
+                           <label className="form-label">Start Time</label>
+                           <input
+                              type="datetime-local"
+                              className="form-control"
+                              name="startTime"
+                              value={formData.startTime}
+                              onChange={handleChange}
+                              required
+                           />
+                        </div>
+                        <div className="mb-3">
+                           <label className="form-label">End Time</label>
+                           <input
+                              type="datetime-local"
+                              className="form-control"
+                              name="endTime"
+                              value={formData.endTime}
+                              onChange={handleChange}
+                              required
+                           />
+                        </div>
+                        <div className="d-flex justify-content-between mt-4">
+                           <button type="submit" className="btn btn-success px-4">
+                              Create
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => setShowForm(false)}
+                              className="btn btn-danger px-4"
+                           >
+                              Cancel
+                           </button>
+                        </div>
+                     </form>
+                  </div>
+               )}
+            </>
+         )}
 
-            <div
-              style={{
-                flex: "1 1 35%",
-                textAlign: "center",
-                paddingTop: "20px",
-              }}
-            >
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/2221/2221190.png"
-                alt="Test Illustration"
-                style={{ maxWidth: "150px", marginBottom: "20px" }}
-              />
-              <p className="text-secondary" style={{ fontSize: "0.95rem" }}>
-                Use this form to assign tests to students with full control over
-                time and questions.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+         {testId && (
+            <>
+               <div className="alert alert-info">
+                  <strong>Test Created!</strong> Test ID: <code>{testId}</code>
+               </div>
+               <InviteStudentsSection
+                  testId={testId}
+                  onInvited={() => setRefreshStudentsFlag((f) => !f)}
+               />
+               <AddQuestionsSection testId={testId} />
+               <RemoveStudentsSection
+                  testId={testId}
+                  refreshFlag={refreshStudentsFlag}
+                  onRemoved={() => setRefreshStudentsFlag((f) => !f)}
+               />
+            </>
+         )}
+      </div>
+   );
 };
 
 export default TestFormSection;

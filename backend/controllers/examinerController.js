@@ -84,3 +84,24 @@ export const removeStudent = async (req, res) => {
       res.status(500).json({ msg: "Internal error occurred" });
    }
 };
+
+
+export const getTestStudents = async (req, res) => {
+   try {
+      const { testId } = req.params;
+      const test = await Test.findById(testId).populate({
+         path: "students",
+         populate: { path: "user", select: "email name" }
+      });
+      if (!test) return res.status(404).json({ msg: "Test not found" });
+      res.json({
+         students: test.students.map(s => ({
+            _id: s._id,
+            email: s.user?.email || "unknown",
+            name: s.user?.name || "unknown",
+         }))
+      });
+   } catch (err) {
+      res.status(500).json({ msg: "Failed to fetch test students" });
+   }
+};
