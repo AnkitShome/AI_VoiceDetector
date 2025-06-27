@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 const verifyToken = (req, res, next) => {
    const token = req.cookies?.accessToken;
-
+   console.log("token status:",token);
    if (!token) return res.status(401).json({ msg: "Access token missing" });
 
    try {

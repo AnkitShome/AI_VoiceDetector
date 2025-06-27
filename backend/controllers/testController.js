@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from "uuid";
 
 export const createTest = async (req, res) => {
    try {
-      const { title, startTime, endTime, department } = req.body;
+      // console.log("req body:",req.body);
+      const { title, start_time, end_time, department, student } = req.body;
 
       const sharedLinkId = uuidv4();
 
@@ -13,8 +14,9 @@ export const createTest = async (req, res) => {
          title,
          examiner: req.user._id,
          department,
-         startTime,
-         endTime,
+         start_time,
+         end_time,
+         student,
          sharedLinkId,
       });
 

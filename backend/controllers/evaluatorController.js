@@ -6,10 +6,12 @@ import { getEvaluationMailHTML } from "../utils/mailTemplate.js";
 export const sendEvaluationLink = async (req, res) => {
    try {
       const { testId } = req.params;
+      console.log("testId:",testId);
       const test = await Test.findById(testId);
       if (!test) return res.status(404).json({ msg: "Test not found" });
 
-      const examiner = await Examiner.findById(test.examiner).populate("user");
+      const examiner = await Examiner.findOne({user : test.examiner}).populate("user");
+      console.log("examiner:",examiner);
       if (!examiner || !examiner.user) return res.status(404).json({ msg: "Examiner not found" });
 
       const mailHTML = getEvaluationMailHTML({
