@@ -2,6 +2,7 @@ import Test from "../models/Test.js";
 import Question from "../models/Question.js";
 import TestAttempt from "../models/TestAttempt.js";
 import { v4 as uuidv4 } from "uuid";
+import Examiner from "../models/Examiner.js";
 
 export const createTest = async (req, res) => {
    try {
@@ -9,14 +10,20 @@ export const createTest = async (req, res) => {
 
       const sharedLinkId = uuidv4();
 
+      const examiner = await Examiner.findOne({ user: req.user._id })
+      if (!examiner) {
+         return res.status(401).json({ msg: "Only examiner can create test" });
+      }
+
       const test = await Test.create({
          title,
-         examiner: req.user._id,
+         examiner: examiner._id,
          department,
          startTime,
          endTime,
          sharedLinkId,
       });
+
 
       res.status(200).json({ msg: "Test created", test });
 

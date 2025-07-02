@@ -5,6 +5,7 @@ import Examiner from "../models/Examiner.js";
 
 export const inviteStudents = async (req, res) => {
    try {
+
       const { testId } = req.params;
       let { studentEmails } = req.body;
       const { user } = req;
@@ -17,7 +18,9 @@ export const inviteStudents = async (req, res) => {
       const test = await Test.findById(testId);
       if (!test) return res.status(404).json({ msg: "Test not found" });
 
-      if (test.examiner.toString() !== user._id.toString())
+      const examiner = await Examiner.findOne({ user: user._id })
+
+      if (test.examiner.toString() !== examiner._id.toString())
          return res.status(401).json({ msg: "Unauthorized" });
 
       const users = await User.find({ email: { $in: studentEmails }, role: "student" });
@@ -43,6 +46,7 @@ export const inviteStudents = async (req, res) => {
       } else {
          msg = "All students added to Test.";
       }
+      // console.log(added)
 
       res.status(200).json({
          msg,
@@ -68,7 +72,7 @@ export const removeStudent = async (req, res) => {
       const test = await Test.findById(testId);
       if (!test) return res.status(404).json({ msg: "Test not found" });
       if (test.examiner.toString() !== examiner._id.toString())
-         return res.status(401).json({ msg: "Unauthorized" });
+         return res.status(401).json({ msg: "Examiner Unauthorized" });
 
       const wasPresent = test.students.some(id => id.toString() === studentId);
       if (!wasPresent) {

@@ -49,24 +49,41 @@ export const sendOtp = async (req, res) => {
       res.status(500).json({ msg: "Error sending OTP", error: err.message });
    }
 };
-
 export const registerUser = async (req, res) => {
    try {
+
       const { name, username, email, password, role = "student", studentData, examinerData } = req.body;
 
-      if (!["student", "examiner"].includes(role)) return res.status(400).json({ msg: "Invalid role specified" });
+      if (!["student", "examiner"].includes(role))
+         return res.status(400).json({ msg: "Invalid role specified" });
 
-      if (await User.findOne({ email })) return res.status(400).json({ msg: "User already registered" });
+      if (await User.findOne({ email }))
+         return res.status(400).json({ msg: "User already registered" });
 
       if (role == "student" && !req.file) {
-         return res.status(400).json({ msg: "Image is required for student registration" })
+         return res.status(400).json({ msg: "Image is required for student registration" });
       }
 
       const newUser = await User.create({ name, username, email, password, role });
 
       if (role === "student" && studentData) {
-         const result = await uploadOnCloudinary(req.file.buffer)
-         const parsed = typeof studentData === "string" ? JSON.parse(studentData) : studentData;
+         let result;
+         try {
+            result = await uploadOnCloudinary(req.file.buffer);
+            console.log("Cloudinary upload result:", result);
+         } catch (cloudErr) {
+            console.error("Cloudinary upload error:", cloudErr);
+            return res.status(500).json({ msg: "Image upload failed", error: cloudErr.message });
+         }
+
+         let parsed;
+         try {
+            parsed = typeof studentData === "string" ? JSON.parse(studentData) : studentData;
+            console.log("Parsed studentData:", parsed);
+         } catch (parseErr) {
+            console.error("studentData parse error:", parseErr, studentData);
+            return res.status(400).json({ msg: "Student data parse error" });
+         }
 
          await Student.create({
             user: newUser._id,
@@ -78,7 +95,6 @@ export const registerUser = async (req, res) => {
 
       if (role === "examiner" && examinerData) {
          const parsed = typeof examinerData === "string" ? JSON.parse(examinerData) : examinerData;
-
          await Examiner.create({
             user: newUser._id,
             department: parsed.department
@@ -89,6 +105,7 @@ export const registerUser = async (req, res) => {
 
       res.status(200).json({ msg: "User registered", user: userObj });
    } catch (err) {
+      console.error("REGISTER ERROR:", err);
       res.status(500).json({ msg: "Error while registering user", error: err.message });
    }
 };
