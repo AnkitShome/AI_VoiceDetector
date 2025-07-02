@@ -4,35 +4,33 @@ import "./Cases.css";
 
 const caseData = [
   {
-    title: "Woman loses Rs 1,688.58 USD",
-    heading: "Woman loses Rs 1,688.58 USD in AI voice scam",
+    title: "⏰ Late Join – Test Denied",
+    heading: "Strict Time Compliance: No Late Entries",
     content:
-      "A woman in Hyderabad lost Rs 1.4 lakh (1,688.58 USD) to a scammer using AI to mimic her nephew's voice, claiming he needed money due to an accident. The scam, involving a late-night call and a plea for secrecy, deceived her into transferring funds. Authorities warn that despite the rarity of AI voice scams, the public should verify such urgent financial requests to prevent fraud.",
-    btnText: "Protect Yourself Now",
-    img: "proj_img/mic.jpg",
+      "Each test has a specific start and end time. If a student attempts to join even a minute late, access is automatically denied and the test is marked as 'Missed'. This enforces discipline and prevents students from using leaked questions to gain an unfair advantage.",
+    btnText: "Understand the Rules",
+    img: "proj_img/time.png", // 🔄 Replace with your image path
   },
   {
-    title: "Company Loses $25.6 Million by a Deepfake Scam",
-    heading: "Company Loses $25.6 Million by a Deepfake Scam",
+    title: "🤖 AI vs Human Scoring",
+    heading: "AI Detection with Human Cross-Check",
     content:
-      "A finance worker at a multinational firm was tricked into sending $25 million due to a deepfake video call with fraudsters posing as the CFO and colleagues. The scam, uncovered after verification with the company's head office, led to six arrests and highlights the risks of deepfake technology in fraud. This incident is among several exploiting deepfakes for criminal purposes, raising global concern over the technology's misuse.",
-    btnText: "Protect Your Company Now",
-    img: "proj_img/skel.png",
+      "All submitted voice responses are first analyzed using an LLM-based scoring engine to detect AI-generated content. If flagged, the test is reviewed by a human evaluator who confirms the results. This dual-layered system ensures fairness, transparency, and reliability in scoring.",
+    btnText: "Learn How It Works",
+    img: "proj_img/ai_human31.png", // 🔄 Replace with your image path
   },
   {
-    title: "Mom, these bad men have me",
-    heading: "Mom, these bad men have me",
+    title: "🎥 Video Identity Verification",
+    heading: "Live Video Recording to Prevent Impersonation",
     content:
-      "Jennifer DeStefano received a call claiming her daughter Brianna was kidnapped, demanding a $1 million ransom, which turned out to be a scam involving a voice cloning AI. The terrifying experience, full of threats and ransom negotiations, ended with the relief of discovering Brianna was safe. The incident highlighted the sophisticated nature of modern scams, exploiting AI to clone voices and manipulate families, causing significant distress and confusion.",
-    btnText: "Protect Your Family Now",
-    img: "proj_img/aivoicedetector.png",
+      "The candidate’s webcam remains active during the viva. A short video is recorded and linked with the voice response. This ensures the registered student is the one taking the test, discouraging impersonation and enhancing credibility.",
+    btnText: "See the Safeguards",
+    img: "proj_img/webcam.png", // 🔄 Replace with your image path
   },
 ];
 
 const Cases = () => {
   const [selectedCaseIndex, setSelectedCaseIndex] = useState(0);
-
-  // Animation controls
   const controls = useAnimation();
   const ref = useRef();
 
@@ -60,8 +58,17 @@ const Cases = () => {
       animate={controls}
       transition={{ duration: 0.8, ease: "easeOut" }}
     >
-      <div className="text-center mb-5">
-        <h1 className="fw-bold display-5">Real Cases of AI Voice Fraud</h1>
+      <div className="text-center mb-5 mt-5">
+        <h1
+          className="fw-bold display-5"
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            letterSpacing: "0.5px",
+            WebkitFontSmoothing: "antialiased",
+          }}
+        >
+          Strengthening Credibility in AI-Based Viva Tests
+        </h1>
       </div>
       <div className="row align-items-stretch">
         {/* ✅ Case Buttons */}
@@ -94,10 +101,10 @@ const Cases = () => {
             <img
               src={selectedCase.img}
               alt="case"
-              className="img-fluid rounded h-100 w-100 object-fit-cover zoom-btn-hover"
+              className="img-fluid rounded h-100 w-100 object-fit-cover "
               style={{
                 objectFit: "cover",
-                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                transition: "transform 0.3s ease, boxShadow 0.3s ease",
                 borderRadius: "12px",
               }}
             />
@@ -108,7 +115,7 @@ const Cases = () => {
         <div className="col-md-4 d-flex align-items-stretch right">
           <div
             style={{ flex: "1 1 60%" }}
-            className="d-flex flex-column justify-content-between zoom-btn-hover"
+            className="d-flex flex-column justify-content-between "
           >
             <div>
               <h4 className="fw-bold mb-3">{selectedCase.heading}</h4>
