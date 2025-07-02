@@ -1,13 +1,16 @@
-import User from "../models/User.js";
-import Student from "../models/Student.js";
-import Examiner from "../models/Examiner.js";
-import OTP from "../models/OTP.js";
+
 
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import otpGenerator from "otp-generator";
 import { OAuth2Client } from "google-auth-library";
+import { uploadOnCloudinary } from "../config/cloudinary.js";
+
+import User from "../models/User.js";
+import Student from "../models/Student.js";
+import Examiner from "../models/Examiner.js";
+import OTP from "../models/OTP.js";
 
 dotenv.config();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -55,18 +58,31 @@ export const registerUser = async (req, res) => {
 
       if (await User.findOne({ email })) return res.status(400).json({ msg: "User already registered" });
 
+      if (role == "student" && !req.file) {
+         return res.status(400).json({ msg: "Image is required for student registration" })
+      }
+
       const newUser = await User.create({ name, username, email, password, role });
 
       if (role === "student" && studentData) {
+         const result = await uploadOnCloudinary(req.file.buffer)
          const parsed = typeof studentData === "string" ? JSON.parse(studentData) : studentData;
 
-         await Student.create({ user: newUser._id, scholarId: parsed.scholarId, department: parsed.department });
+         await Student.create({
+            user: newUser._id,
+            scholarId: parsed.scholarId,
+            department: parsed.department,
+            image: result.secure_url
+         });
       }
 
       if (role === "examiner" && examinerData) {
          const parsed = typeof examinerData === "string" ? JSON.parse(examinerData) : examinerData;
 
-         await Examiner.create({ user: newUser._id, department: parsed.department });
+         await Examiner.create({
+            user: newUser._id,
+            department: parsed.department
+         });
       }
 
       const { password: _, ...userObj } = newUser.toObject();

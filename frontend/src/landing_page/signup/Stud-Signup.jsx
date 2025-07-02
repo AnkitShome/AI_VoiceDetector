@@ -8,6 +8,9 @@ import "./Prof-Signup.css";
 
 const Prof_Signup = ({ onClose }) => {
    const navigate = useNavigate();
+   const [image, setImage] = useState(null);
+   const [imagePreview, setImagePreview] = useState(null);
+
    const [inputValue, setInputValue] = useState({
       name: "",
       email: "",
@@ -36,26 +39,26 @@ const Prof_Signup = ({ onClose }) => {
       toast.success(msg, {
          position: "bottom-right",
       });
-
    const handleSubmit = async (e) => {
       e.preventDefault();
       try {
-         const payload = {
-            name,
-            username,
-            email,
-            password,
-            role: "student",
-            studentData: {
-               department,
-               scholarId
-            }
-         };
+         const formData = new FormData();
+         formData.append("name", name);
+         formData.append("username", username);
+         formData.append("email", email);
+         formData.append("password", password);
+         formData.append("role", "student");
+         formData.append("department", department);
+         formData.append("scholarId", scholarId);
+         if (image) formData.append("image", image);
 
          const { data } = await axios.post(
             "http://localhost:5000/api/auth/register",
-            payload,
-            { withCredentials: true }
+            formData,
+            {
+               withCredentials: true,
+               headers: { "Content-Type": "multipart/form-data" }
+            }
          );
 
          handleSuccess(data.msg);
@@ -81,7 +84,10 @@ const Prof_Signup = ({ onClose }) => {
          department: "",
          scholarId: "",
       });
+      setImage(null);
+      setImagePreview(null);
    };
+
 
    return (
       <motion.div
@@ -93,6 +99,54 @@ const Prof_Signup = ({ onClose }) => {
          <h2 className="signup-title">Student Register</h2>
          <form className="signup-form" onSubmit={handleSubmit}>
             <div className="form-group">
+               <div className="form-group" style={{ display: "flex", justifyContent: "center" }}>
+                  <label htmlFor="image-upload" style={{ cursor: "pointer", position: "relative" }}>
+                     <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={e => {
+                           const file = e.target.files[0];
+                           if (file) {
+                              setImage(file);
+                              setImagePreview(URL.createObjectURL(file));
+                           }
+                        }}
+                     />
+                     <div
+                        style={{
+                           width: 72, height: 72, borderRadius: "50%",
+                           background: "#f0f0f0", border: "2px dashed #aaa",
+                           display: "flex", alignItems: "center", justifyContent: "center",
+                           fontSize: 32, color: "#999", position: "relative", overflow: "hidden"
+                        }}
+                        className="image-upload-btn"
+                     >
+                        {imagePreview ? (
+                           <img
+                              src={imagePreview}
+                              alt="Profile Preview"
+                              style={{
+                                 width: "100%", height: "100%",
+                                 objectFit: "cover", borderRadius: "50%"
+                              }}
+                           />
+                        ) : (
+                           <span style={{ fontWeight: 600, fontSize: 40, lineHeight: 1 }}>+</span>
+                        )}
+                        <span style={{
+                           position: "absolute", bottom: 0, right: 0, background: "#007bff",
+                           borderRadius: "50%", width: 24, height: 24, display: "flex",
+                           alignItems: "center", justifyContent: "center", color: "#fff",
+                           fontSize: 18, border: "2px solid #fff"
+                        }}>
+                           <i className="fa fa-camera" />
+                        </span>
+                     </div>
+                  </label>
+               </div>
+
                <label>Name:</label>
                <input
                   type="text"

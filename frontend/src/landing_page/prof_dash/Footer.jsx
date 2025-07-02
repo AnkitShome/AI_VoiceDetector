@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -10,7 +11,6 @@ const fetchTestStudents = async (testId) => {
       `http://localhost:5000/api/examiner/test/${testId}/students`,
       { withCredentials: true }
    );
-   // Return as [{value, label}]
    return data.students.map((s) => ({
       value: s._id,
       label: `${s.name} (${s.email})`,
@@ -62,6 +62,60 @@ function RemoveStudentsSection({ testId, refreshFlag, onRemoved }) {
             disabled={!selected}
          >
             Remove Student
+         </button>
+      </div>
+   );
+}
+
+// Section for inviting evaluators to test
+function InviteEvaluatorsSection({ testId, onInvited }) {
+   const [emails, setEmails] = useState([]);
+   const [isLoading, setIsLoading] = useState(false);
+
+   function isValidEmail(email) {
+      return /\S+@\S+\.\S+/.test(email);
+   }
+
+   const handleInvite = async () => {
+      if (emails.length === 0) return toast.error("Enter evaluator emails!");
+      const validEmails = emails.map(e => e.value).filter(isValidEmail);
+      if (validEmails.length === 0) return toast.error("No valid emails!");
+
+      setIsLoading(true);
+      try {
+         const { data } = await axios.post(
+            `http://localhost:5000/api/examiner/invite-evaluator/${testId}`,
+            { evaluatorEmails: validEmails },
+            { withCredentials: true }
+         );
+         toast.success("Invitations sent!");
+         setEmails([]);
+         if (onInvited) onInvited();
+      } catch (err) {
+         toast.error(err?.response?.data?.msg || "Failed to invite evaluators.");
+      }
+      setIsLoading(false);
+   };
+
+   return (
+      <div className="mb-4">
+         <h5>Invite Evaluators</h5>
+         <CreatableSelect
+            isMulti
+            value={emails}
+            onChange={setEmails}
+            placeholder="Enter evaluator emails…"
+            formatCreateLabel={input => `Invite "${input}"`}
+            isValidNewOption={isValidEmail}
+            styles={{ menu: (base) => ({ ...base, zIndex: 9999 }) }}
+         />
+         <button
+            className="btn btn-success mt-2"
+            type="button"
+            onClick={handleInvite}
+            disabled={isLoading}
+         >
+            {isLoading ? "Sending..." : "Invite"}
          </button>
       </div>
    );
@@ -236,7 +290,6 @@ const TestFormSection = () => {
          setTestId(res.data.test._id);
          setShowForm(false);
       } catch (err) {
-         console.log(err)
          toast.error(
             err?.response?.data?.msg || "Failed to create test. Check your inputs."
          );
@@ -330,6 +383,10 @@ const TestFormSection = () => {
                <div className="alert alert-info">
                   <strong>Test Created!</strong> Test ID: <code>{testId}</code>
                </div>
+               <InviteEvaluatorsSection
+                  testId={testId}
+                  onInvited={() => toast.info("Evaluators invited!")}
+               />
                <InviteStudentsSection
                   testId={testId}
                   onInvited={() => setRefreshStudentsFlag((f) => !f)}
