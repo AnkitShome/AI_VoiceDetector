@@ -48,8 +48,10 @@ const Prof_Signup = ({ onClose }) => {
          formData.append("email", email);
          formData.append("password", password);
          formData.append("role", "student");
-         formData.append("department", department);
-         formData.append("scholarId", scholarId);
+         formData.append(
+            "studentData",
+            JSON.stringify({ scholarId, department })
+         );
          if (image) formData.append("image", image);
 
          const { data } = await axios.post(
