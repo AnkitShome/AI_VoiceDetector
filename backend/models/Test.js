@@ -2,12 +2,13 @@ import mongoose from 'mongoose';
 
 const TestSchema = new mongoose.Schema({
    title: { type: String, required: true },
-   examiner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      examiner: { type: mongoose.Schema.Types.ObjectId, ref: 'Examiner', required: true },
+
    evaluators: [{ type: mongoose.Schema.Types.ObjectId, ref: "Evaluator" }],
    department: { type: String },
    sharedLinkId: { type: String,unique:true }, 
    questions: [{ type: String }],
-   students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+   student: { type: String },
    pendingEvaluators: [{
       email: { type: String },
       inviteToken: { type: String },
