@@ -78,11 +78,9 @@ export const inviteStudents = async (req, res) => {
    }
 };
 
-
 export const removeStudent = async (req, res) => {
    try {
-      const { testId } = req.params;
-      const { studentId } = req.body;
+      const { testId, studentId } = req.params;
       const { user } = req;
 
       const examiner = await Examiner.findOne({ user: user._id });
@@ -90,6 +88,7 @@ export const removeStudent = async (req, res) => {
 
       const test = await Test.findById(testId);
       if (!test) return res.status(404).json({ msg: "Test not found" });
+
       if (test.examiner.toString() !== examiner._id.toString())
          return res.status(401).json({ msg: "Examiner Unauthorized" });
 

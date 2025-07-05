@@ -37,10 +37,9 @@ const TestDetails = () => {
 
    // Fetch all scholar IDs
    useEffect(() => {
-      axios
-         .get("http://localhost:5000/api/details/allStudentScholarId", {
-            withCredentials: true,
-         })
+      axios.get(`http://localhost:5000/api/details/unaddedScholarId/${testId}`, {
+         withCredentials: true,
+      })
          .then((res) => {
             setScholarOptions(
                res.data.scholarIds.map((sid) => ({
@@ -61,7 +60,7 @@ const TestDetails = () => {
    const handleRemoveStudent = async (studentId) => {
       try {
          await axios.delete(
-            `http://localhost:5000/api/examiner/${test._id}/student/${studentId}`,
+            `http://localhost:5000/api/examiner/remove/${test._id}/student/${studentId}`,
             { withCredentials: true }
          );
          toast.success("Student removed");
@@ -97,7 +96,7 @@ const TestDetails = () => {
    const handleRemoveQuestion = async (questionId) => {
       try {
          await axios.delete(
-            `http://localhost:5000/api/test/${test._id}/question/${questionId}`,
+            `http://localhost:5000/api/examiner/${test._id}/question/${questionId}`,
             { withCredentials: true }
          );
          toast.success("Question removed");

@@ -2,13 +2,13 @@ import jwt from "jsonwebtoken";
 
 const verifyToken = (req, res, next) => {
    const token = req.cookies?.accessToken;
-   console.log("token status:", token);
+   // console.log("token status:", token);
    if (!token) return res.status(401).json({ msg: "Access token missing" });
 
    try {
       const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
       req.user = decoded; // Attach user info to req
-      console.log("Decoded JWT:", decoded);
+      // console.log("Decoded JWT:", decoded);
       next();
    } catch (err) {
 
