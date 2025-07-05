@@ -2,13 +2,28 @@ import Test from "../models/Test.js";
 import Question from "../models/Question.js";
 import TestAttempt from "../models/TestAttempt.js";
 import { v4 as uuidv4 } from "uuid";
+import Student from "../models/Student.js";
+import User from "../models/User.js";
 
 export const createTest = async (req, res) => {
    try {
       // console.log("req body:",req.body);
-      const { title, start_time, end_time, department, student } = req.body;
+      const { title, start_time, end_time, department } = req.body;
+      let { scholarIds } = req.body;
 
       const sharedLinkId = uuidv4();
+
+      if (typeof scholarIds === "string") scholarIds = [scholarIds]
+      if (!Array.isArray(scholarIds) || !scholarIds.length)
+         return res.status(400).json({ msg: "Provide at least one student Id" });
+
+
+      const students = await Student.find({ scholarId: { $in: scholarIds } }).populate('user');
+
+      const added = students
+         .filter(st => st.user && st.user.role === "student")
+         .map(st => st._id);
+
 
       const test = await Test.create({
          title,
@@ -16,8 +31,8 @@ export const createTest = async (req, res) => {
          department,
          start_time,
          end_time,
-         student,
          sharedLinkId,
+         students: added
       });
 
       res.status(200).json({ msg: "Test created", test });

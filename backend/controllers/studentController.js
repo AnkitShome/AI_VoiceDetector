@@ -99,24 +99,23 @@ export const submitTest = async (req, res) => {
 
 export const getUpcomingTestsForStudent = async (req, res) => {
    try {
-    const { _id } = req.user;
-    const studtemp= await Student.findOne({ user : _id});
-    const schIdtemp= studtemp.scholarId;
-    console.log("req.user: ", req.user);
-    console.log("Current logged in email:", req.user.email);
+      const { _id } = req.user;
+      const student = await Student.findOne({ user: _id });
+      const now = new Date(); // UTC
 
-    const now = new Date(); // UTC
+      const tests = await Test.find({
+         students: student._id,
+         // end_time: { $gt: now }, // Compare with UTC
+      }).select("title start_time end_time examiner sharedLinkId createdAt");
 
-    console.log("NOW (UTC):", now.toISOString());
 
-    const tests = await Test.find({
-      student: schIdtemp,
-      end_time: { $gt: now }, // Compare with UTC
-    }).select("title start_time end_time examiner sharedLinkId createdAt");
-    console.log(tests);
-    return res.status(200).json({ tests });
+      console.log('Student._id:', student._id);
+      console.log('Now:', now);
+      console.log('Tests found:', tests.length, tests);
+
+      return res.status(200).json({ tests });
    } catch (err) {
       console.error(err);
-    return res.status(500).json({ msg: "Server Error" });
+      return res.status(500).json({ msg: "Server Error" });
    }
 };
