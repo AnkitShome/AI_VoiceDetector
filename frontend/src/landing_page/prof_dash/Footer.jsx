@@ -6,10 +6,13 @@ import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import Select from "react-select";
 import CreatableSelect from 'react-select/creatable';
+import { useNavigate } from "react-router-dom";
 
 
 const TestFormSection = () => {
    const { profName } = useParams();
+
+   const navigate = useNavigate();
 
    const displayName = profName
       .split("-")
@@ -138,14 +141,23 @@ const TestFormSection = () => {
    return (
       <div className="container mt-5">
          <ToastContainer />
-         <div className="d-flex justify-content-center mb-4">
+         <div className="d-flex justify-content-center align-items-center mb-4">
+            <button
+               className="btn btn-outline-primary px-4 py-2 shadow"
+               onClick={() => navigate("/prof-dash/:profName/view-tests")}
+               type="button"
+            >
+               View Tests
+            </button>
             <button
                onClick={() => setShowForm(true)}
-               className="btn btn-primary px-4 py-2 shadow"
+               className="btn btn-primary px-4 py-2 shadow ms-3"
+               type="button"
             >
                Create Test
             </button>
          </div>
+
 
          {showForm && (
             <div

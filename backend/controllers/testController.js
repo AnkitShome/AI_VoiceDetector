@@ -4,6 +4,7 @@ import TestAttempt from "../models/TestAttempt.js";
 import { v4 as uuidv4 } from "uuid";
 import Student from "../models/Student.js";
 import User from "../models/User.js";
+import Examiner from "../models/Examiner.js";
 
 export const createTest = async (req, res) => {
    try {
@@ -24,10 +25,15 @@ export const createTest = async (req, res) => {
          .filter(st => st.user && st.user.role === "student")
          .map(st => st._id);
 
+      const examiner = await Examiner.findOne({ user: req.user._id })
+      if (!examiner) {
+         return res.status(403).json({ msg: "Unauthorized" })
+      }
+      const examinerId = examiner._id
 
       const test = await Test.create({
          title,
-         examiner: req.user._id,
+         examiner: examinerId,
          department,
          start_time,
          end_time,

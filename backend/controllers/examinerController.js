@@ -3,6 +3,28 @@ import Test from "../models/Test.js";
 import Student from "../models/Student.js";
 import Examiner from "../models/Examiner.js";
 
+export const getTests = async (req, res) => {
+   try {
+      const userId = req.user._id
+
+      const examiner = await Examiner.findOne({ user: userId })
+      if (!examiner) {
+         return res.status(403).json({ msg: "Ypu are not an examiner" })
+      }
+      const tests = await Test.find({ examiner: examiner._id })
+      if (!tests) {
+         return res.status(404).json({ msg: "Tests not found" })
+      }
+      if (tests.length === 0) {
+         return res.status(200).json({ tests: [] })
+      }
+      return res.status(200).json({ msg: "Tests fetched", tests })
+
+   } catch (error) {
+      return res.status(500).json({ msg: "Internal error" })
+   }
+}
+
 export const inviteStudents = async (req, res) => {
    try {
       const { testId } = req.params;
