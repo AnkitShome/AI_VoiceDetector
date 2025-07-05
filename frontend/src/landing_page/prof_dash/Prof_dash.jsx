@@ -3,12 +3,12 @@ import Hero from './Hero.jsx';
 import TestFormSection from './Footer.jsx';
 import RemoveStudent from './Remove.jsx';
 function Prof_dash() {
-  return ( 
-    <>
-    <Hero/>
-    <TestFormSection/>
-    <RemoveStudent/>
-    </>
+   return (
+      <>
+         <Hero />
+         <TestFormSection />
+         {/* <RemoveStudent/> */}
+      </>
 
    );
 }
