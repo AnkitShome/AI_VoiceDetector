@@ -156,7 +156,7 @@ const TestDetails = () => {
                </h2>
                <button
                   className="btn btn-secondary"
-                  onClick={() => navigate(`/view-tests`)}
+                  onClick={() => navigate(`/prof-dash/:profName/view-tests`)}
                >
                   Back to All Tests
                </button>
