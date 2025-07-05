@@ -12,6 +12,7 @@ import Stud_SignUp from './landing_page/signup/Stud-Signup';
 import Navbar from './landing_page/Navbar';
 import EvaluatorPage from './landing_page/evaluator/EvaluationPage'
 import ViewTest from './landing_page/prof_dash/view_tests/ViewTest';
+import TestDetails from './landing_page/prof_dash/view_test/TestDetails';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -30,6 +31,8 @@ root.render(
          <Route path='/evaluator' element={<EvaluatorPage />} />
 
          <Route path="/prof-dash/:profName/view-tests" element={<ViewTest />} />
+         <Route path="/prof-dash/:profName/test/:testId" element={<TestDetails />} />
+
       </Routes>
    </BrowserRouter>
 );

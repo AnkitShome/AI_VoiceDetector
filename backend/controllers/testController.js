@@ -49,6 +49,30 @@ export const createTest = async (req, res) => {
    }
 };
 
+export const getTest = async (req, res) => {
+   try {
+      const { testId } = req.params
+      const test = await Test.findById(testId)
+         .populate({
+            path: "students",
+            populate: { path: "user", select: "email name" }
+         })
+         .populate("questions"); // populates the full questions
+
+      if (!test) {
+         return res.status(404).json({
+            msg: "Test not found"
+         })
+      }
+      return res.status(200).json({
+         msg: "Test fetched", test
+      })
+   } catch (err) {
+      console.error("Error fetching test:", err);
+      res.status(500).json({ msg: "An error occurred while fetching the test" });
+   }
+}
+
 export const addQuestion = async (req, res) => {
    try {
       const { testId } = req.params;
@@ -93,5 +117,49 @@ export const addQuestions = async (req, res) => {
    } catch (err) {
       console.error("Add questions error:", err);
       res.status(500).json({ msg: "Server error while adding questions" });
+   }
+};
+
+
+// Add more students to a test
+export const addStudents = async (req, res) => {
+   try {
+      const { testId } = req.params;
+      let { scholarIds } = req.body;
+      if (typeof scholarIds === "string") scholarIds = [scholarIds];
+      if (!Array.isArray(scholarIds) || !scholarIds.length)
+         return res.status(400).json({ msg: "No student IDs provided" });
+
+      const students = await Student.find({ scholarId: { $in: scholarIds } });
+      const test = await Test.findById(testId);
+      if (!test) return res.status(404).json({ msg: "Test not found" });
+
+      let added = [];
+      for (const st of students) {
+         if (!test.students.some(id => id.toString() === st._id.toString())) {
+            test.students.push(st._id);
+            added.push(st._id);
+         }
+      }
+      await test.save();
+      res.status(200).json({ msg: "Students added", added });
+   } catch (err) {
+      res.status(500).json({ msg: "Error adding students" });
+   }
+};
+
+
+// Remove question from a test
+export const removeQuestion = async (req, res) => {
+   try {
+      const { testId, questionId } = req.params;
+      const test = await Test.findById(testId);
+      if (!test) return res.status(404).json({ msg: "Test not found" });
+      test.questions = test.questions.filter(qid => qid.toString() !== questionId);
+      await test.save();
+      await Question.findByIdAndDelete(questionId);
+      res.status(200).json({ msg: "Question removed" });
+   } catch (err) {
+      res.status(500).json({ msg: "Error removing question" });
    }
 };
