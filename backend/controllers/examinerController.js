@@ -7,42 +7,46 @@ export const inviteStudents = async (req, res) => {
    try {
 
       const { testId } = req.params;
-      let { studentEmails } = req.body;
+      let { scholarIds } = req.body;
       const { user } = req;
 
-      if (typeof studentEmails === "string") studentEmails = [studentEmails];
-
-      if (!Array.isArray(studentEmails) || !studentEmails.length)
-         return res.status(400).json({ msg: "Provide at least one student email" });
+      if (typeof scholarIds === "string") scholarIds = [scholarIds];
+      if (!Array.isArray(scholarIds) || !scholarIds.length)
+         return res.status(400).json({ msg: "Provide at least one student Id" });
 
       const test = await Test.findById(testId);
       if (!test) return res.status(404).json({ msg: "Test not found" });
 
+<<<<<<< HEAD
       const examiner = await Examiner.findOne({ user: user._id })
 
+=======
+      const examiner = await Examiner.findOne({ user: user._id });
+      if (!examiner) return res.status(401).json({ msg: "Unauthorized" });
+>>>>>>> 587950ddd6b1d81183998ee5a3b3c3c01bfc1aa5
       if (test.examiner.toString() !== examiner._id.toString())
          return res.status(401).json({ msg: "Unauthorized" });
 
-      const users = await User.find({ email: { $in: studentEmails }, role: "student" });
-
-      const foundEmails = users.map(u => u.email);
-      const notFoundEmails = studentEmails.filter(email => !foundEmails.includes(email));
-      const students = await Student.find({ user: { $in: users.map(u => u._id) } });
-
+      // Get all Student docs for given scholarIds
+      const students = await Student.find({ scholarId: { $in: scholarIds } }).populate('user');
+      const foundIds = students.map(s => s.scholarId);
+      const notFoundIds = scholarIds.filter(id => !foundIds.includes(id));
       let added = [];
-      for (const s of students) {
-         if (!test.students.includes(s._id)) {
-            test.students.push(s._id);
-            added.push(s._id);
+
+      // Add unique students to test
+      for (const student of students) {
+         if (!test.students.includes(student._id)) {
+            test.students.push(student._id);
+            added.push(student._id);
          }
       }
       await test.save();
 
       let msg;
       if (added.length === 0) {
-         msg = "No valid student emails were added.";
-      } else if (notFoundEmails.length) {
-         msg = `Some students added. Not found: ${notFoundEmails.join(", ")}`;
+         msg = "No valid students were added.";
+      } else if (notFoundIds.length) {
+         msg = `Some students added. Not found: ${notFoundIds.join(", ")}`;
       } else {
          msg = "All students added to Test.";
       }
@@ -51,7 +55,7 @@ export const inviteStudents = async (req, res) => {
       res.status(200).json({
          msg,
          addedStudents: added,
-         notFoundEmails
+         notFoundIds
       });
    } catch (err) {
       console.error(err);

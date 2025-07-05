@@ -81,18 +81,41 @@ export const submitTest = async (req, res) => {
    }
 };
 
+// export const getUpcomingTestsForStudent = async (req, res) => {
+//    try {
+//       const { user } = req;
+//       const student = await Student.findOne({ user: user._id });
+//       if (!student) return res.status(404).json({ msg: "Student not found" });
+
+//       const tests = await Test.find({ students: student._id, endTime: { $gt: new Date() } })
+//          .select("title startTime endTime examiner sharedLinkId createdAt");
+
+//       res.status(200).json({ tests });
+//    } catch (err) {
+//       console.error(err);
+//       res.status(500).json({ msg: "Server Error" });
+//    }
+// };
+
 export const getUpcomingTestsForStudent = async (req, res) => {
    try {
-      const { user } = req;
-      const student = await Student.findOne({ user: user._id });
-      if (!student) return res.status(404).json({ msg: "Student not found" });
+      const { _id } = req.user;
+      const student = await Student.findOne({ user: _id });
+      const now = new Date(); // UTC
 
-      const tests = await Test.find({ students: student._id, endTime: { $gt: new Date() } })
-         .select("title startTime endTime examiner sharedLinkId createdAt");
+      const tests = await Test.find({
+         students: student._id,
+         // end_time: { $gt: now }, // Compare with UTC
+      }).select("title start_time end_time examiner sharedLinkId createdAt");
 
-      res.status(200).json({ tests });
+
+      console.log('Student._id:', student._id);
+      console.log('Now:', now);
+      console.log('Tests found:', tests.length, tests);
+
+      return res.status(200).json({ tests });
    } catch (err) {
       console.error(err);
-      res.status(500).json({ msg: "Server Error" });
+      return res.status(500).json({ msg: "Server Error" });
    }
 };

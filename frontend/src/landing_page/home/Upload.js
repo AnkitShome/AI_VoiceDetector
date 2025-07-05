@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from "react";
-import { Card, Form, Button } from "react-bootstrap";
 import { motion, useAnimation } from "framer-motion";
+import Lottie from "lottie-react";
 import "./Upload.css";
+
+// 👉 Replace this with your actual animation JSON file path
+import vivaAnimation from "../../assets/lotties/viva_animation.json";
 
 function Upload() {
   const leftControls = useAnimation();
@@ -26,7 +29,6 @@ function Upload() {
   return (
     <div className="container" ref={ref}>
       <div className="row">
-
         {/* ✅ Left Side with horizontal transition + hover zoom */}
         <motion.div
           className="col-6 d-flex justify-content-center align-items-center"
@@ -35,7 +37,7 @@ function Upload() {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <div
-            className="p-4 zoom-on-hover"
+            className="p-4 "
             style={{
               borderRadius: "20px",
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
@@ -47,29 +49,32 @@ function Upload() {
               className="fw-bold display-6 mb-3 text-center"
               style={{ fontFamily: "'Playfair Display', serif" }}
             >
-              Be Protected Against AI Cloned Voices and Deepfakes
+              Smarter Viva Management
             </h4>
             <p
               className="text-dark fs-5 text-center"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
-              We offer an AI tool that can identify if an audio is real or AI generated
+              A platform to create, conduct, and evaluate viva exams seamlessly.
             </p>
 
             {[
-              "Detects AI cloned voices from all major AI models",
-              "Integrated background noise/music remover",
-              "Available as a Chrome extension to scan any voice across the web",
+              "Assign tests with timing and custom questions",
+              "Students record responses directly on the platform",
+              "Choose AI or human evaluation",
             ].map((text, idx) => (
               <h5 key={idx} className="mb-3 text-primary text-center">
-                <i className="fa fa-chevron-circle-right me-2" aria-hidden="true"></i>
+                <i
+                  className="fa fa-chevron-circle-right me-2"
+                  aria-hidden="true"
+                ></i>
                 {text}
               </h5>
             ))}
           </div>
         </motion.div>
 
-        {/* ✅ Right Side with horizontal transition + hover zoom */}
+        {/* ✅ Right Side with Lottie Animation */}
         <motion.div
           className="col-6 mt-4 d-flex justify-content-center align-items-center"
           style={{ minHeight: "60vh" }}
@@ -77,37 +82,16 @@ function Upload() {
           animate={rightControls}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <div className="zoom-on-hover" style={{ width: "100%", maxWidth: "600px" }}>
-            <Card
-              style={{
-                padding: "30px",
-                borderRadius: "12px",
-                boxShadow: "0 0 15px rgba(0,0,0,0.1)",
-                marginTop: "-50px",
-              }}
-            >
-              <div className="text-center mb-4">
-                <img
-                  src="proj_img/audio-file.png"
-                  alt="Upload Icon"
-                  style={{ width: "60px" }}
-                />
-              </div>
-
-              <Form.Group controlId="formFile" className="mb-4">
-                <Form.Control type="file" disabled />
-              </Form.Group>
-
-              <div className="text-center">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  style={{ padding: "8px 24px", borderRadius: "6px" }}
-                >
-                  Detect Now
-                </Button>
-              </div>
-            </Card>
+          <div
+            className=""
+            style={{ width: "100%", maxWidth: "500px" }}
+          >
+            <Lottie
+              animationData={vivaAnimation}
+              loop={true}
+              autoplay={true}
+              style={{ width: "100%", height: "100%" }}
+            />
           </div>
         </motion.div>
       </div>

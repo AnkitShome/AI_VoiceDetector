@@ -2,26 +2,48 @@ import Test from "../models/Test.js";
 import Question from "../models/Question.js";
 import TestAttempt from "../models/TestAttempt.js";
 import { v4 as uuidv4 } from "uuid";
+<<<<<<< HEAD
 import Examiner from "../models/Examiner.js";
+=======
+import Student from "../models/Student.js";
+import User from "../models/User.js";
+>>>>>>> 587950ddd6b1d81183998ee5a3b3c3c01bfc1aa5
 
 export const createTest = async (req, res) => {
    try {
-      const { title, startTime, endTime, department } = req.body;
+      // console.log("req body:",req.body);
+      const { title, start_time, end_time, department } = req.body;
+      let { scholarIds } = req.body;
 
       const sharedLinkId = uuidv4();
 
+<<<<<<< HEAD
       const examiner = await Examiner.findOne({ user: req.user._id })
       if (!examiner) {
          return res.status(401).json({ msg: "Only examiner can create test" });
       }
+=======
+      if (typeof scholarIds === "string") scholarIds = [scholarIds]
+      if (!Array.isArray(scholarIds) || !scholarIds.length)
+         return res.status(400).json({ msg: "Provide at least one student Id" });
+
+
+      const students = await Student.find({ scholarId: { $in: scholarIds } }).populate('user');
+
+      const added = students
+         .filter(st => st.user && st.user.role === "student")
+         .map(st => st._id);
+
+>>>>>>> 587950ddd6b1d81183998ee5a3b3c3c01bfc1aa5
 
       const test = await Test.create({
          title,
          examiner: examiner._id,
          department,
-         startTime,
-         endTime,
+         start_time,
+         end_time,
          sharedLinkId,
+         students: added
       });
 
 

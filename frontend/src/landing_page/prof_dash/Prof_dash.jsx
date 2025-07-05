@@ -7,7 +7,7 @@ function Prof_dash() {
       <>
          <Hero />
          <TestFormSection />
-         {/* <RemoveStudent /> */}
+         <RemoveStudent />
       </>
 
    );

@@ -13,4 +13,8 @@
 //    )
 // }
 
+<<<<<<< HEAD
 // export default AssignEvaluators
+=======
+// export default AssignEvaluators
+>>>>>>> 587950ddd6b1d81183998ee5a3b3c3c01bfc1aa5

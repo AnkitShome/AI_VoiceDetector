@@ -196,4 +196,8 @@ export async function reviewStudentAnswer(req, res) {
 //       console.error(err);
 //       res.status(500).json({ msg: "Internal error" });
 //    }
+<<<<<<< HEAD
 // };
+=======
+// };
+>>>>>>> 587950ddd6b1d81183998ee5a3b3c3c01bfc1aa5

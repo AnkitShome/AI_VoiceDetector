@@ -30,21 +30,19 @@ function Hero() {
           className="mt-5 fw-bold"
           style={{ fontFamily: "'Playfair Display', serif" }}
         >
-          Expose AI Voices with Precision
+          Smarter Viva Evaluations with AI
         </h1>
         <p>
-          Leverage cutting-edge detection technology to distinguish authentic
-          human speech from synthetically generated audio — swiftly and
-          effortlessly.
+          Professors craft personalized, time-bound viva exams while students respond via voice — with instant AI insights revealing answer authenticity and depth.
         </p>
         <Link to="/">
           <button
-          className="p-2 btn btn-primary fs-5"
-          style={{ width: "20%", margin: "0 auto" }}
-           to="/"
-        >
-          Signup Now
-        </button>
+            className="p-2 btn btn-primary fs-5"
+            style={{ width: "20%", margin: "0 auto" }}
+            to="/"
+          >
+            Signup Now
+          </button>
         </Link>
       </div>
     </div>
