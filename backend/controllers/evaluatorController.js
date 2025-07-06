@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import jwt from "jsonwebtoken"
 
 import Test from "../models/Test.js";
 import Examiner from "../models/Examiner.js";
@@ -16,7 +17,7 @@ function generatePassword(length = 10) {
 export const addPendingEvaluator = async (req, res) => {
    try {
       const { testId } = req.params;
-      const { evaluatorEmails } = req.body; // should be an array from frontend
+      const { evaluatorEmails } = req.body;
 
       if (!Array.isArray(evaluatorEmails) || evaluatorEmails.length === 0)
          return res.status(400).json({ msg: "No evaluator emails provided." });
@@ -25,25 +26,25 @@ export const addPendingEvaluator = async (req, res) => {
       if (!test) return res.status(404).json({ msg: "Test not found" });
 
       let invited = [];
-
       for (let evaluatorEmail of evaluatorEmails) {
-         const token = crypto.randomBytes(32).toString('hex');
-
-         // Prevent duplicate pending invites
+         // Prevent duplicate invites
          if (test.pendingEvaluators.some(e => e.email === evaluatorEmail)) continue;
 
+         const token = crypto.randomBytes(32).toString('hex');
          test.pendingEvaluators.push({
             email: evaluatorEmail,
             inviteToken: token,
             invitedAt: new Date()
          });
 
-         const link = `http://${process.env.FRONTEND_URL}/evaluator/invite?testId=${testId}&token=${token}`;
-         await sendEvaluatorInviteMail(evaluatorEmail, link);
-         invited.push(evaluatorEmail);
-      }
+         // Save after each push to avoid race conditions!
+         await test.save();
 
-      await test.save();
+         const link = `http://localhost:3000/evaluator/invite?testId=${testId}&token=${token}`;
+         await sendEvaluatorInviteMail(evaluatorEmail, link);
+
+         invited.push({ email: evaluatorEmail, token }); // For debug
+      }
 
       return res.status(200).json({ msg: "Invitations sent", invited });
    } catch (error) {
@@ -51,18 +52,18 @@ export const addPendingEvaluator = async (req, res) => {
    }
 };
 
-
 export const registerFromInvite = async (req, res) => {
    try {
-      const { testId, token, name, password } = req.body
+      const { testId, token, name, password } = req.body;
       const test = await Test.findById(testId);
 
-      if (!test) {
-         return res.status(404).json({ msg: "Test not found" })
-      }
+      if (!test) return res.status(404).json({ msg: "Test not found" });
 
-      const pending = test.pendingEvaluators.find(e => e.inviteToken === token)
+      // DEBUG - print all pending tokens
+      // console.log("DEBUG pendingEvaluators:", test.pendingEvaluators.map(e => e.inviteToken));
+      // console.log("DEBUG incoming token:", token);
 
+      const pending = test.pendingEvaluators.find(e => e.inviteToken === token);
       if (!pending) return res.status(400).json({ msg: "Invalid or expired invite." });
 
       let evaluator = await Evaluator.findOne({ email: pending.email });
@@ -74,6 +75,7 @@ export const registerFromInvite = async (req, res) => {
       evaluator = await Evaluator.create({ name, email: pending.email, password: hashed });
 
       test.evaluators.push(evaluator._id);
+      // Remove the pending evaluator after registration
       test.pendingEvaluators = test.pendingEvaluators.filter(e => e.inviteToken !== token);
       await test.save();
 
@@ -81,26 +83,21 @@ export const registerFromInvite = async (req, res) => {
          { id: evaluator._id, email: evaluator.email, role: "evaluator" },
          process.env.JWT_SECRET,
          { expiresIn: "7d" }
-      )
+      );
 
-      res.cookie("evaluator_token",
-         jwtToken,
-         {
-            httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60,
-            sameSite: "strict"
-         }
-      )
+      res.cookie("evaluator_token", jwtToken, {
+         httpOnly: true,
+         maxAge: 7 * 24 * 60 * 60 * 1000,
+         sameSite: "strict"
+      });
 
-      res.json({ evaluator: { id: evaluator._id, email: evaluator.email, name: evaluator.name }, token: jwtToken });
+      res.json({ evaluator: { _id: evaluator._id, email: evaluator.email, name: evaluator.name }, token: jwtToken });
 
    } catch (error) {
-      return res.status(500).json({
-         msg: "Internal error occured"
-      })
+      console.log("REGISTER ERROR:", error);
+      return res.status(500).json({ msg: "Internal error occurred" });
    }
-}
-
+};
 
 export async function evaluatorLogin(req, res) {
    const { email, password } = req.body;
@@ -121,10 +118,13 @@ export async function evaluatorLogin(req, res) {
 
 export const getEvaluatorTests = async (req, res) => {
    try {
-      const { evaluatorId } = req.evaluator._id
-      const tests = await Test.find({ evaluators: evaluatorId })
+      const { evaluator } = req
+      const tests = await Test.find({ evaluators: evaluator.id || evaluator.id })
+      console.log(typeof (evaluator.id))
       return res.status(200).json({ msg: "Tests for evaluator fetched", tests })
    } catch (error) {
+
+      console.log(error)
       return res.status(500).json({ msg: "Invalid entry" })
    }
 }
@@ -132,7 +132,7 @@ export const getEvaluatorTests = async (req, res) => {
 export const getTestAttempts = async (req, res) => {
    try {
       const { testId } = req.params
-      const { evaluatorId } = req.evaluator._id
+      const evaluatorId = req.evaluator._id || req.evaluator.id
 
       if (!testId) return res.status(401).json({ msg: "Invalid test ID" })
 
@@ -140,6 +140,19 @@ export const getTestAttempts = async (req, res) => {
 
       res.json({ attemptedTests })
 
+   } catch (error) {
+      return res.status(500).json({ msg: "Internal error occured" })
+   }
+}
+
+export const getTestAttempt = async (req, res) => {
+   try {
+      const { attemptId } = req.params
+      if (!attemptId) return res.status(400).json({ msg: "Invalid test attempt Id" })
+
+      const testAttempt = await TestAttempt.findById(attemptId)
+
+      return res.status(200).json({ msg: "Test attempt fetched", attempt: testAttempt })
    } catch (error) {
       return res.status(500).json({ msg: "Internal error occured" })
    }

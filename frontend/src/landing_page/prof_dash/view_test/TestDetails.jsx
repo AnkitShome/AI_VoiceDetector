@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Select from "react-select"; // <-- ADDED
-
+import Select from "react-select";
 import Hero from "../Hero";
 
 const TestDetails = () => {
@@ -17,7 +16,6 @@ const TestDetails = () => {
    // ScholarId select
    const [scholarOptions, setScholarOptions] = useState([]);
    const [selectedScholar, setSelectedScholar] = useState(null);
-
    const [addQuestionText, setAddQuestionText] = useState("");
 
    // Fetch test
@@ -36,26 +34,44 @@ const TestDetails = () => {
       }
    };
 
-   // Fetch all scholar IDs
-   useEffect(() => {
-      axios.get(`http://localhost:5000/api/details/unaddedScholarId/${testId}`, {
-         withCredentials: true,
-      })
-         .then((res) => {
-            setScholarOptions(
-               res.data.scholarIds.map((sid) => ({
-                  value: sid,
-                  label: sid,
-               }))
-            );
-         })
-         .catch(() => toast.error("Failed to fetch scholar IDs"));
-   }, []);
+   // Fetch available scholar IDs
+   const fetchScholarOptions = async () => {
+      try {
+         const res = await axios.get(
+            `http://localhost:5000/api/details/unaddedScholarId/${testId}`,
+            { withCredentials: true }
+         );
+         setScholarOptions(
+            res.data.scholarIds.map((sid) => ({
+               value: sid,
+               label: sid,
+            }))
+         );
+      } catch {
+         toast.error("Failed to fetch scholar IDs");
+      }
+   };
 
    useEffect(() => {
       fetchTest();
+      fetchScholarOptions();
       // eslint-disable-next-line
    }, [testId]);
+
+   // Remove Test
+   const removeTest = async (testId) => {
+      if (!window.confirm("Are you sure you want to delete this test?")) return;
+      try {
+         await axios.delete(
+            `http://localhost:5000/api/examiner/remove/test/${testId}`,
+            { withCredentials: true }
+         );
+         toast.success("Test deleted");
+         navigate(`/prof-dash/${profName}/view-tests`);
+      } catch (error) {
+         toast.error("Failed to remove test");
+      }
+   };
 
    // Remove Student
    const handleRemoveStudent = async (studentId) => {
@@ -66,6 +82,7 @@ const TestDetails = () => {
          );
          toast.success("Student removed");
          fetchTest();
+         fetchScholarOptions();
       } catch {
          toast.error("Failed to remove student");
       }
@@ -86,10 +103,9 @@ const TestDetails = () => {
          toast.success("Student added");
          setSelectedScholar(null);
          fetchTest();
+         fetchScholarOptions();
       } catch (err) {
-         toast.error(
-            err?.response?.data?.msg || "Failed to add student"
-         );
+         toast.error(err?.response?.data?.msg || "Failed to add student");
       }
    };
 
@@ -97,7 +113,7 @@ const TestDetails = () => {
    const handleRemoveQuestion = async (questionId) => {
       try {
          await axios.delete(
-            `http://localhost:5000/api/examiner/${test._id}/question/${questionId}`,
+            `http://localhost:5000/api/test/${test._id}/question/${questionId}`,
             { withCredentials: true }
          );
          toast.success("Question removed");

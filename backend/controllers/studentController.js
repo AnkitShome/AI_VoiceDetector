@@ -105,7 +105,7 @@ export const getUpcomingTestsForStudent = async (req, res) => {
 
       const tests = await Test.find({
          students: student._id,
-         // end_time: { $gt: now }, // Compare with UTC
+         end_time: { $gt: now }, // Compare with UTC
       }).select("title start_time end_time examiner sharedLinkId createdAt");
 
 

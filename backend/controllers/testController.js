@@ -120,6 +120,16 @@ export const addQuestions = async (req, res) => {
    }
 };
 
+export const removeTest = async (req, res) => {
+   try {
+      const { testId } = req.params
+      if (!testId) return res.status(400).json("Enter testID")
+      await Test.findByIdAndDelete(testId)
+      return res.status(200).json({ msg: "Test removed" })
+   } catch (error) {
+      res.status(500).json({ msg: "Error removing test" });
+   }
+}
 
 // Add more students to a test
 export const addStudents = async (req, res) => {

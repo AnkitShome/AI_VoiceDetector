@@ -10,9 +10,13 @@ import Prof_Login from './landing_page/signup/Prof-Login';
 import Stud_Login from './landing_page/signup/Stud-Login';
 import Stud_SignUp from './landing_page/signup/Stud-Signup';
 import Navbar from './landing_page/Navbar';
-import EvaluatorPage from './landing_page/evaluator/EvaluationPage'
 import ViewTest from './landing_page/prof_dash/view_tests/ViewTest';
 import TestDetails from './landing_page/prof_dash/view_test/TestDetails';
+import EvaluatorInvite from './landing_page/evaluator/EvaluatorInvite';
+import EvaluatorLogin from './landing_page/evaluator/EvaluatorLogin';
+import EvaluatorDashboard from './landing_page/evaluator/EvaluatorDashboard';
+import EvaluatorTestAttempts from './landing_page/evaluator/EvaluatorTestAttempts';
+import EvaluatorReviewAttempt from './landing_page/evaluator/EvaluatorReview';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -28,10 +32,15 @@ root.render(
          <Route path='/stud-dash/:studName' element={<Stud_dash />} />
          <Route path='/prof-login' element={<Prof_Login />} />
          <Route path='/stud-login' element={<Stud_Login />} />
-         <Route path='/evaluator' element={<EvaluatorPage />} />
 
          <Route path="/prof-dash/:profName/view-tests" element={<ViewTest />} />
          <Route path="/prof-dash/:profName/test/:testId" element={<TestDetails />} />
+
+         <Route path="/evaluator/invite" element={<EvaluatorInvite />} />
+         <Route path="/evaluator/login" element={<EvaluatorLogin />} />
+         <Route path="/evaluator/dashboard" element={<EvaluatorDashboard />} />
+         <Route path="/evaluator/test/:testId/attempts" element={<EvaluatorTestAttempts />} />
+         <Route path="/evaluator/review/:attemptId" element={<EvaluatorReviewAttempt />} />
 
       </Routes>
    </BrowserRouter>
