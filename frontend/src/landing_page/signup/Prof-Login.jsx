@@ -42,7 +42,8 @@ const Login = () => {
       localStorage.setItem("profile", JSON.stringify(data.profile));
 
       const role = data.user.role;
-      const username = data.user.username?.replace(/\s+/g, "-").toLowerCase();
+      const username = data.user.name?.replace(/\s+/g, "-").toLowerCase();
+      localStorage.setItem("username", username);
 
       if (role === "examiner") {
         handleSuccess("Login Successful");

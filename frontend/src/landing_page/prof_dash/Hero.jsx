@@ -5,7 +5,11 @@ function Hero() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const username = location.pathname.split("/").filter(Boolean).pop();
+  const username = localStorage.getItem("username");
+  const displayName = username
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -33,7 +37,7 @@ function Hero() {
         <div className="d-flex align-items-center gap-2">
           <i class="fa fa-black-tie" aria-hidden="true" style={{fontSize :"2rem"}}></i>
           <span className="text-dark">
-            Welcome <strong>{username}</strong>
+            Welcome <strong>{displayName}</strong>
           </span>
         </div>
 
