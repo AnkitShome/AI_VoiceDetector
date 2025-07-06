@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Select from "react-select"; // <-- ADDED
-
+import Select from "react-select";
 import Hero from "../Hero";
 
 const TestDetails = () => {
@@ -12,11 +11,8 @@ const TestDetails = () => {
    const navigate = useNavigate();
    const [test, setTest] = useState(null);
    const [loading, setLoading] = useState(true);
-
-   // ScholarId select
    const [scholarOptions, setScholarOptions] = useState([]);
    const [selectedScholar, setSelectedScholar] = useState(null);
-
    const [addQuestionText, setAddQuestionText] = useState("");
 
    // Fetch test
@@ -35,26 +31,44 @@ const TestDetails = () => {
       }
    };
 
-   // Fetch all scholar IDs
-   useEffect(() => {
-      axios.get(`http://localhost:5000/api/details/unaddedScholarId/${testId}`, {
-         withCredentials: true,
-      })
-         .then((res) => {
-            setScholarOptions(
-               res.data.scholarIds.map((sid) => ({
-                  value: sid,
-                  label: sid,
-               }))
-            );
-         })
-         .catch(() => toast.error("Failed to fetch scholar IDs"));
-   }, []);
+   // Fetch available scholar IDs
+   const fetchScholarOptions = async () => {
+      try {
+         const res = await axios.get(
+            `http://localhost:5000/api/details/unaddedScholarId/${testId}`,
+            { withCredentials: true }
+         );
+         setScholarOptions(
+            res.data.scholarIds.map((sid) => ({
+               value: sid,
+               label: sid,
+            }))
+         );
+      } catch {
+         toast.error("Failed to fetch scholar IDs");
+      }
+   };
 
    useEffect(() => {
       fetchTest();
+      fetchScholarOptions();
       // eslint-disable-next-line
    }, [testId]);
+
+   // Remove Test
+   const removeTest = async (testId) => {
+      if (!window.confirm("Are you sure you want to delete this test?")) return;
+      try {
+         await axios.delete(
+            `http://localhost:5000/api/examiner/remove/test/${testId}`,
+            { withCredentials: true }
+         );
+         toast.success("Test deleted");
+         navigate(`/prof-dash/${profName}/view-tests`);
+      } catch (error) {
+         toast.error("Failed to remove test");
+      }
+   };
 
    // Remove Student
    const handleRemoveStudent = async (studentId) => {
@@ -65,6 +79,7 @@ const TestDetails = () => {
          );
          toast.success("Student removed");
          fetchTest();
+         fetchScholarOptions();
       } catch {
          toast.error("Failed to remove student");
       }
@@ -85,10 +100,9 @@ const TestDetails = () => {
          toast.success("Student added");
          setSelectedScholar(null);
          fetchTest();
+         fetchScholarOptions();
       } catch (err) {
-         toast.error(
-            err?.response?.data?.msg || "Failed to add student"
-         );
+         toast.error(err?.response?.data?.msg || "Failed to add student");
       }
    };
 
@@ -96,7 +110,7 @@ const TestDetails = () => {
    const handleRemoveQuestion = async (questionId) => {
       try {
          await axios.delete(
-            `http://localhost:5000/api/examiner/${test._id}/question/${questionId}`,
+            `http://localhost:5000/api/test/${test._id}/question/${questionId}`,
             { withCredentials: true }
          );
          toast.success("Question removed");
@@ -153,12 +167,20 @@ const TestDetails = () => {
                <h2 className="fw-bold" style={{ fontSize: "2rem" }}>
                   Test Details
                </h2>
-               <button
-                  className="btn btn-secondary"
-                  onClick={() => navigate(`/prof-dash/:profName/view-tests`)}
-               >
-                  Back to All Tests
-               </button>
+               <div>
+                  <button
+                     className="btn btn-secondary me-2"
+                     onClick={() => navigate(`/prof-dash/${profName}/view-tests`)}
+                  >
+                     Back to All Tests
+                  </button>
+                  <button
+                     className="btn btn-danger"
+                     onClick={() => removeTest(test._id)}
+                  >
+                     Delete Test
+                  </button>
+               </div>
             </div>
 
             <div className="card shadow-sm mb-4">
@@ -205,11 +227,15 @@ const TestDetails = () => {
                   <div className="card h-100">
                      <div className="card-header fw-bold bg-primary text-white d-flex justify-content-between align-items-center">
                         Questions
-                        <span className="badge bg-light text-primary">{test.questions?.length ?? 0}</span>
+                        <span className="badge bg-light text-primary">
+                           {test.questions?.length ?? 0}
+                        </span>
                      </div>
                      <ul className="list-group list-group-flush">
                         {(test.questions || []).length === 0 ? (
-                           <li className="list-group-item text-muted">No questions found.</li>
+                           <li className="list-group-item text-muted">
+                              No questions found.
+                           </li>
                         ) : (
                            test.questions.map((q, idx) => (
                               <li
@@ -217,7 +243,8 @@ const TestDetails = () => {
                                  className="list-group-item d-flex justify-content-between align-items-center"
                               >
                                  <span>
-                                    <strong>Q{idx + 1}:</strong> {q.questionText || "Untitled"}
+                                    <strong>Q{idx + 1}:</strong>{" "}
+                                    {q.questionText || "Untitled"}
                                  </span>
                                  <button
                                     className="btn btn-sm btn-danger"
@@ -254,7 +281,9 @@ const TestDetails = () => {
                   <div className="card h-100">
                      <div className="card-header fw-bold bg-success text-white d-flex justify-content-between align-items-center">
                         Students
-                        <span className="badge bg-light text-success">{test.students?.length ?? 0}</span>
+                        <span className="badge bg-light text-success">
+                           {test.students?.length ?? 0}
+                        </span>
                      </div>
                      <ul className="list-group list-group-flush">
                         {(test.students || []).length === 0 ? (
