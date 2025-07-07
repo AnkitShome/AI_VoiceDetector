@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import HomePage from './landing_page/home/HomePage';
@@ -41,8 +43,10 @@ root.render(
          <Route path="/evaluator/dashboard" element={<EvaluatorDashboard />} />
          <Route path="/evaluator/test/:testId/attempts" element={<EvaluatorTestAttempts />} />
          <Route path="/evaluator/review/:attemptId" element={<EvaluatorReviewAttempt />} />
+         
 
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
    </BrowserRouter>
 );
 

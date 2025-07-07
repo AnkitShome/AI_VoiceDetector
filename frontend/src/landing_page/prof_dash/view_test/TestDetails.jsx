@@ -67,7 +67,7 @@ const TestDetails = () => {
             { withCredentials: true }
          );
          toast.success("Test deleted");
-         navigate(`/prof-dash/${profName}/view-tests`);
+         navigate(`/prof-dash/${username}/view-tests`);
       } catch (error) {
          toast.error("Failed to remove test");
       }

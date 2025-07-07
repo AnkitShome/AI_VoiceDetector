@@ -14,7 +14,7 @@ export const getAllStudentEmails = async (req, res) => {
 
 export const getAllProfEmails = async (req, res) => {
    try {
-      const profs = await User.find({ role: "examiner" }).select("email username");
+      const profs = await User.find({ role: "examiner" }).select("email username name");
       res.json({ professors: profs });
    } catch {
       res.status(500).json({ msg: "Failed to fetch prof emails and usernames" });

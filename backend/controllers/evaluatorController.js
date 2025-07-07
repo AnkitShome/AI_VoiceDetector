@@ -48,24 +48,26 @@ export const addPendingEvaluator = async (req, res) => {
 
       return res.status(200).json({ msg: "Invitations sent", invited });
    } catch (error) {
+      console.log("eval err:",error);
       return res.status(500).json({ msg: "Internal error", error: error.message });
    }
 };
 
 export const registerFromInvite = async (req, res) => {
-   try {
+   try {console.log("first error");
       const { testId, token, name, password } = req.body;
       const test = await Test.findById(testId);
-
+      console.log("first error");
       if (!test) return res.status(404).json({ msg: "Test not found" });
 
       // DEBUG - print all pending tokens
       // console.log("DEBUG pendingEvaluators:", test.pendingEvaluators.map(e => e.inviteToken));
       // console.log("DEBUG incoming token:", token);
-
+console.log("first error");
       const pending = test.pendingEvaluators.find(e => e.inviteToken === token);
+      console.log("first error");
       if (!pending) return res.status(400).json({ msg: "Invalid or expired invite." });
-
+      console.log("first error");
       let evaluator = await Evaluator.findOne({ email: pending.email });
       if (evaluator) {
          return res.status(409).json({ msg: "Evaluator already registered. Please login." });
@@ -119,7 +121,9 @@ export async function evaluatorLogin(req, res) {
 export const getEvaluatorTests = async (req, res) => {
    try {
       const { evaluator } = req
-      const tests = await Test.find({ evaluators: evaluator.id || evaluator.id })
+      console.log("evaluator:",evaluator);
+      const tests = await Test.find({ evaluators: evaluator._id || evaluator._id })
+      console.log("evaluator tests:",tests);
       console.log(typeof (evaluator.id))
       return res.status(200).json({ msg: "Tests for evaluator fetched", tests })
    } catch (error) {
