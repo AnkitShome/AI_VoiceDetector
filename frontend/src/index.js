@@ -19,6 +19,8 @@ import EvaluatorLogin from './landing_page/evaluator/EvaluatorLogin';
 import EvaluatorDashboard from './landing_page/evaluator/EvaluatorDashboard';
 import EvaluatorTestAttempts from './landing_page/evaluator/EvaluatorTestAttempts';
 import EvaluatorReviewAttempt from './landing_page/evaluator/EvaluatorReview';
+import EvaluatorForgotPassword from './landing_page/evaluator/forgot-password/EvaluatorForgotPassword';
+import EvaluatorAssignmentAccept from './landing_page/evaluator/EvaluatorAssignmentAccept';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -43,7 +45,10 @@ root.render(
          <Route path="/evaluator/dashboard" element={<EvaluatorDashboard />} />
          <Route path="/evaluator/test/:testId/attempts" element={<EvaluatorTestAttempts />} />
          <Route path="/evaluator/review/:attemptId" element={<EvaluatorReviewAttempt />} />
-         
+
+         <Route path="/evaluator/forgot-password" element={<EvaluatorForgotPassword />} />
+         <Route path="/evaluator/accept" element={<EvaluatorAssignmentAccept />} />
+
 
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
