@@ -23,8 +23,8 @@ const TestFormSection = () => {
    const [studentOptions, setStudentOptions] = useState([]);
    const [selectedStudents, setSelectedStudents] = useState([]);
 
-   const [evaluatorOptions, setEvaluatorOptions] = useState([]);
-   const [evaluators, setEvaluators] = useState([]); // selected evaluators
+   // const [evaluatorOptions, setEvaluatorOptions] = useState([]);
+   const [evaluators, setEvaluators] = useState([]);
 
    const [formData, setFormData] = useState({
       professorName: displayName,
@@ -56,29 +56,6 @@ const TestFormSection = () => {
       };
       fetchScholarIds();
 
-      // Fetch professor emails for evaluator dropdown
-      const fetchEvaluators = async () => {
-         try {
-            const res = await axios.get(
-               "http://localhost:5000/api/details/allProfEmails",
-               {
-                  withCredentials: true,
-               }
-            );
-            // console.log("profReg:", res.data.professors);
-            const options = res.data.professors.map((prof) => ({
-               label: `${prof.email}`,
-               value: `${prof.email}`,
-            }));
-
-            setEvaluatorOptions(options); // Correctly set dropdown options
-         } catch (err) {
-            console.log(err);
-            toast.error("Failed to load evaluator names");
-         }
-      };
-
-      fetchEvaluators();
    }, []);
 
    const handleQuestionChange = (index, value) => {
@@ -360,13 +337,13 @@ const TestFormSection = () => {
 
                         <div className="mb-3">
                            <label className="form-label">Add evaluator(s)</label>
-                           <Select
-                              options={evaluatorOptions}
+                           <CreatableSelect
                               isMulti
-                              placeholder="Choose evaluator email(s)..."
+                              placeholder="Type or choose evaluator email(s)..."
                               value={evaluators}
                               onChange={setEvaluators}
                            />
+
                         </div>
 
                         <div className="d-flex justify-content-between mt-4">
