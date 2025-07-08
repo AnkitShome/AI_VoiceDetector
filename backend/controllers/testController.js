@@ -57,7 +57,8 @@ export const getTest = async (req, res) => {
             path: "students",
             populate: { path: "user", select: "email name" }
          })
-         .populate("questions"); // populates the full questions
+         .populate("questions")
+         .populate("evaluators", "email");
 
       if (!test) {
          return res.status(404).json({
@@ -163,7 +164,7 @@ export const addStudents = async (req, res) => {
 export const removeQuestion = async (req, res) => {
    try {
       const { testId, questionId } = req.params;
-      const test = await Test.findById(testId);
+      const test = await Test.findById(testId)
       if (!test) return res.status(404).json({ msg: "Test not found" });
       test.questions = test.questions.filter(qid => qid.toString() !== questionId);
       await test.save();

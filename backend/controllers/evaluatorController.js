@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken"
 import Test from "../models/Test.js";
 import Examiner from "../models/Examiner.js";
 import transporter from "../utils/mailer.js";
-import { sendEvaluatorInviteMail } from '../utils/evaluatorMailTemplate.js';
+import { sendEvaluatorInviteMail, sendEvaluatorAssignmentMail } from '../utils/evaluatorMailTemplate.js';
 import Evaluator from '../models/Evaluator.js';
 import TestAttempt from '../models/TestAttempt.js';
 
@@ -27,6 +27,18 @@ export const addPendingEvaluator = async (req, res) => {
 
       let invited = [];
       for (let evaluatorEmail of evaluatorEmails) {
+
+         let evaluator = await Evaluator.findOne({ email: evaluatorEmail })
+
+         if (evaluator) {
+            const acceptToken = jwt.sign({ evaluatorId: evaluator._id, testId }, process.env.JWT_SECRET, { expiresIn: "15m" })
+
+            const link = `http://localhost:3000/evaluator/accept?testId=${testId}&token=${acceptToken}`;
+
+            await sendEvaluatorAssignmentMail(evaluatorEmail, link, test.title)
+            continue;
+         }
+
          // Prevent duplicate invites
          if (test.pendingEvaluators.some(e => e.email === evaluatorEmail)) continue;
 
@@ -48,13 +60,14 @@ export const addPendingEvaluator = async (req, res) => {
 
       return res.status(200).json({ msg: "Invitations sent", invited });
    } catch (error) {
-      console.log("eval err:",error);
+      console.log("eval err:", error);
       return res.status(500).json({ msg: "Internal error", error: error.message });
    }
 };
 
 export const registerFromInvite = async (req, res) => {
-   try {console.log("first error");
+   try {
+      console.log("first error");
       const { testId, token, name, password } = req.body;
       const test = await Test.findById(testId);
       console.log("first error");
@@ -63,7 +76,7 @@ export const registerFromInvite = async (req, res) => {
       // DEBUG - print all pending tokens
       // console.log("DEBUG pendingEvaluators:", test.pendingEvaluators.map(e => e.inviteToken));
       // console.log("DEBUG incoming token:", token);
-console.log("first error");
+      console.log("first error");
       const pending = test.pendingEvaluators.find(e => e.inviteToken === token);
       console.log("first error");
       if (!pending) return res.status(400).json({ msg: "Invalid or expired invite." });
@@ -78,11 +91,13 @@ console.log("first error");
 
       test.evaluators.push(evaluator._id);
       // Remove the pending evaluator after registration
-      test.pendingEvaluators = test.pendingEvaluators.filter(e => e.inviteToken !== token);
+      test.pendingEvaluators = test.pendingEvaluators.filter(
+         e => e.inviteToken !== token && e.email !== evaluator.email
+      );
       await test.save();
 
       const jwtToken = jwt.sign(
-         { id: evaluator._id, email: evaluator.email, role: "evaluator" },
+         { _id: evaluator._id, email: evaluator.email, role: "evaluator" },
          process.env.JWT_SECRET,
          { expiresIn: "7d" }
       );
@@ -99,6 +114,45 @@ console.log("first error");
       console.log("REGISTER ERROR:", error);
       return res.status(500).json({ msg: "Internal error occurred" });
    }
+};
+
+// Step 1: Send OTP
+export const sendForgotPasswordOtp = async (req, res) => {
+   const { email } = req.body;
+   const evaluator = await Evaluator.findOne({ email });
+   if (!evaluator) return res.status(404).json({ msg: "No evaluator with that email" });
+
+   const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
+   evaluator.resetPasswordToken = otp;
+   evaluator.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+
+   await evaluator.save();
+
+   await transporter.sendMail({
+      to: email,
+      subject: "Reset your Evaluator password",
+      text: `Your OTP is: ${otp}`,
+   });
+
+   res.json({ msg: "OTP sent to email" });
+};
+
+// Step 2: Reset password
+export const resetEvaluatorPassword = async (req, res) => {
+   const { email, otp, newPassword } = req.body;
+   const evaluator = await Evaluator.findOne({
+      email,
+      resetPasswordToken: otp,
+      resetPasswordExpires: { $gt: Date.now() }
+   });
+   if (!evaluator) return res.status(400).json({ msg: "Invalid or expired OTP" });
+
+   evaluator.password = await bcrypt.hash(newPassword, 10);
+   evaluator.resetPasswordToken = undefined;
+   evaluator.resetPasswordExpires = undefined;
+   await evaluator.save();
+
+   res.json({ msg: "Password updated. Please login." });
 };
 
 export async function evaluatorLogin(req, res) {
@@ -121,9 +175,9 @@ export async function evaluatorLogin(req, res) {
 export const getEvaluatorTests = async (req, res) => {
    try {
       const { evaluator } = req
-      console.log("evaluator:",evaluator);
+      console.log("evaluator:", evaluator);
       const tests = await Test.find({ evaluators: evaluator._id || evaluator._id })
-      console.log("evaluator tests:",tests);
+      console.log("evaluator tests:", tests);
       console.log(typeof (evaluator.id))
       return res.status(200).json({ msg: "Tests for evaluator fetched", tests })
    } catch (error) {
@@ -184,33 +238,70 @@ export async function reviewStudentAnswer(req, res) {
    res.json({ msg: "Review submitted." });
 }
 
-// export const sendEvaluationLink = async (req, res) => {
-//    try {
-//       const { testId } = req.params;
-//       const test = await Test.findById(testId);
-//       if (!test) return res.status(404).json({ msg: "Test not found" });
 
-//       const examiner = await Examiner.findById(test.examiner).populate("user");
-//       if (!examiner || !examiner.user) return res.status(404).json({ msg: "Examiner not found" });
+export const acceptEvaluatorAssignment = async (req, res) => {
 
-//       const mailHTML = getEvaluationMailHTML({
-//          recipientName: examiner.user.name,
-//          testTitle: test.title,
-//          evaluationLink: `https://${process.env.FRONTEND_URL}/evaluate/${testId}`,
-//          additionalText: "These are the student responses to be evaluated",
-//          footerText: "Please complete the evaluation by the specified deadline."
-//       });
+   const { testId, token } = req.query;
+   // console.log("DEBUGGGG!!!")
+   // console.log(testId)
+   // console.log(token)
+   let payload;
+   try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+      // console.log(payload)
+   } catch (e) {
+      return res.status(400).json({ msg: "Invalid or expired token" });
+   }
 
-//       await transporter.sendMail({
-//          from: process.env.USER_GMAIL,
-//          to: examiner.user.email,
-//          subject: "Test Answers Ready for Evaluation",
-//          html: mailHTML,
-//       });
+   const test = await Test.findById(testId);
+   console.log(test)
+   if (!test) return res.status(404).json({ msg: "Test not found" });
 
-//       res.status(200).json({ msg: "Evaluation link sent to examiner." });
-//    } catch (err) {
-//       console.error(err);
-//       res.status(500).json({ msg: "Internal error" });
-//    }
-// };
+   if (!test.evaluators.includes(payload.evaluatorId)) {
+      test.evaluators.push(payload.evaluatorId);
+      await test.save();
+   }
+   res.json({ msg: "You are now an evaluator for this test" });
+};
+
+// Utility function (not Express handler)
+export const deleteEvaluatorById = async (evaluatorId) => {
+
+   await Test.updateMany(
+      { evaluators: evaluatorId },
+      { $pull: { evaluators: evaluatorId } }
+   );
+
+   const evaluator = await Evaluator.findById(evaluatorId);
+   if (evaluator) {
+      await Test.updateMany(
+         { "pendingEvaluators.email": evaluator.email },
+         { $pull: { pendingEvaluators: { email: evaluator.email } } }
+      );
+   }
+
+   await Evaluator.findByIdAndDelete(evaluatorId);
+}
+
+// Express handler for /me
+export const deleteMe = async (req, res) => {
+   try {
+      const evaluatorId = req.evaluator._id;
+      await deleteEvaluatorById(evaluatorId);
+      res.clearCookie("evaluator_token");
+      res.status(200).json({ msg: "Evaluator deleted" });
+   } catch (error) {
+      res.status(500).json({ msg: "Internal error occurred", error: error.message });
+   }
+}
+
+// Express handler for admin (by param)
+export const deleteEvaluator = async (req, res) => {
+   try {
+      const { evaluatorId } = req.params;
+      await deleteEvaluatorById(evaluatorId);
+      res.status(200).json({ msg: "Evaluator deleted and removed from all tests." });
+   } catch (error) {
+      res.status(500).json({ msg: "Internal error occurred", error: error.message });
+   }
+}

@@ -14,6 +14,19 @@ const EvaluatorDashboard = () => {
          .catch(() => toast.error("Could not fetch assigned tests"));
    }, []);
 
+   const handleDeleteAccount = async () => {
+      if (!window.confirm("Are you sure you want to delete your evaluator account? This cannot be undone.")) {
+         return;
+      }
+      try {
+         await axios.delete("http://localhost:5000/api/evaluator/me", { withCredentials: true });
+         toast.success("Account deleted. Logging out...");
+         setTimeout(() => navigate("/evaluator/login"), 1500);
+      } catch (err) {
+         toast.error("Error deleting account");
+      }
+   };
+
    return (
       <div className="container mt-5">
          <div className="card shadow-lg">
@@ -48,6 +61,13 @@ const EvaluatorDashboard = () => {
                )}
             </div>
          </div>
+         {/* Delete Account Button */}
+         <button
+            className="btn btn-danger mt-4"
+            onClick={handleDeleteAccount}
+         >
+            Delete My Account
+         </button>
       </div>
    );
 };
